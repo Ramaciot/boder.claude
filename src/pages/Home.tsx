@@ -11,6 +11,7 @@ import { FAQ } from "@/components/FAQ";
 import { FinalCTA } from "@/components/FinalCTA";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { LiquidEtherBackground } from "@/components/LiquidEtherBackground";
 
 interface HomeProps {
   /** Id de seção para rolar ao montar (ex.: rota /servicos). */
@@ -33,20 +34,23 @@ const Home = ({ scrollTo }: HomeProps) => {
 
   return (
     <div className="min-h-screen">
-      <Header />
-      <main>
-        <Hero />
-        <Bonuses />
-        <Services />
-        <Stats />
-        <Testimonials />
-        <Team />
-        <Authority />
-        <FAQ />
-        <FinalCTA />
-      </main>
-      <Footer />
-      <WhatsAppButton />
+      <LiquidEtherBackground />
+      <div className="relative z-10">
+        <Header />
+        <main>
+          <Hero />
+          <Bonuses />
+          <Services />
+          <Stats />
+          <Testimonials />
+          <Team />
+          <Authority />
+          <FAQ />
+          <FinalCTA />
+        </main>
+        <Footer />
+        <WhatsAppButton />
+      </div>
     </div>
   );
 };

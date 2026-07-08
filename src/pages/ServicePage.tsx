@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { LiquidEtherBackground } from "@/components/LiquidEtherBackground";
 import { FinalCTA } from "@/components/FinalCTA";
 import { Reveal } from "@/components/Reveal";
 import { ButtonLink } from "@/components/Button";
@@ -27,6 +28,8 @@ const ServicePage = () => {
 
   return (
     <div className="min-h-screen">
+      <LiquidEtherBackground />
+      <div className="relative z-10">
       <Header />
       <main>
         {/* Hero do serviço */}
@@ -103,6 +106,7 @@ const ServicePage = () => {
       </main>
       <Footer />
       <WhatsAppButton />
+      </div>
     </div>
   );
 };
