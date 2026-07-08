@@ -10,7 +10,7 @@ import { Authority } from "@/components/Authority";
 import { FAQ } from "@/components/FAQ";
 import { FinalCTA } from "@/components/FinalCTA";
 import { Footer } from "@/components/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
+import ChatBot from "@/components/ChatBot";
 import { LiquidEtherBackground } from "@/components/LiquidEtherBackground";
 
 interface HomeProps {
@@ -49,7 +49,7 @@ const Home = ({ scrollTo }: HomeProps) => {
           <FinalCTA />
         </main>
         <Footer />
-        <WhatsAppButton />
+        <ChatBot />
       </div>
     </div>
   );

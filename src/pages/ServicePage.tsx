@@ -3,7 +3,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
+import ChatBot from "@/components/ChatBot";
 import { LiquidEtherBackground } from "@/components/LiquidEtherBackground";
 import { FinalCTA } from "@/components/FinalCTA";
 import { Reveal } from "@/components/Reveal";
@@ -105,7 +105,7 @@ const ServicePage = () => {
         <FinalCTA />
       </main>
       <Footer />
-      <WhatsAppButton />
+      <ChatBot />
       </div>
     </div>
   );

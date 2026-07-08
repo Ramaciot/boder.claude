@@ -84,11 +84,16 @@ export default {
           "0%": { transform: "translateX(0)" },
           "100%": { transform: "translateX(-50%)" },
         },
+        "scale-in": {
+          "0%": { opacity: "0", transform: "scale(0.92) translateY(12px)" },
+          "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
+        },
       },
       animation: {
         shine: "shine 2s ease-in-out",
         "fade-up": "fade-up 0.7s cubic-bezier(0.25, 0.1, 0.25, 1) both",
         marquee: "marquee 30s linear infinite",
+        "scale-in": "scale-in 0.35s cubic-bezier(0.25, 0.1, 0.25, 1) both",
       },
     },
   },
