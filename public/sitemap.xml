@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://www.agenciaboder.com.br/</loc>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://www.agenciaboder.com.br/servicos/sites-landing-pages</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.agenciaboder.com.br/servicos/social-media</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.agenciaboder.com.br/servicos/ia-atendimento</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.agenciaboder.com.br/servicos/gestao-trafego</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.agenciaboder.com.br/servicos/estrategia-digital</loc>
+    <priority>0.8</priority>
+  </url>
+</urlset>
