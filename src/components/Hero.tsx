@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, BarChart3, Clock, GitBranch, Smartphone, Sparkles, TrendingUp } from "lucide-react";
+import BlurText from "./BlurText";
 import { hero, whatsappLink } from "@/content/site";
 
 const chipIcons = [Smartphone, BarChart3, Clock, GitBranch, TrendingUp];
@@ -87,13 +88,26 @@ export const Hero = () => {
             </motion.span>
           </motion.div>
 
-          <motion.h1
-            variants={item}
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-[1.12] text-balance"
-          >
-            <span className="block mb-1 sm:mb-2">{hero.titleTop}</span>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-[1.12]">
+            <BlurText
+              as="span"
+              text={hero.titleTop}
+              delay={120}
+              animateBy="words"
+              direction="top"
+              className="justify-center mb-1 sm:mb-2"
+            />
             <span className="relative inline-block">
-              <span className="text-gradient">{hero.titleHighlight}</span>
+              <BlurText
+                as="span"
+                text={hero.titleHighlight}
+                delay={120}
+                startDelay={0.45}
+                animateBy="words"
+                direction="top"
+                className="justify-center"
+                segmentClassName="text-gradient"
+              />
               {/* Sublinhado desenhado à mão */}
               <motion.svg
                 className="absolute -bottom-1 sm:-bottom-2 left-0 w-full h-2 sm:h-3"
@@ -109,12 +123,20 @@ export const Hero = () => {
                   strokeLinecap="round"
                   initial={{ pathLength: 0, opacity: 0 }}
                   animate={{ pathLength: 1, opacity: 1 }}
-                  transition={{ duration: 1.4, delay: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
+                  transition={{ duration: 1.4, delay: 1.6, ease: [0.25, 0.1, 0.25, 1] }}
                 />
               </motion.svg>
             </span>
-            <span className="block mt-1 sm:mt-2">{hero.titleBottom}</span>
-          </motion.h1>
+            <BlurText
+              as="span"
+              text={hero.titleBottom}
+              delay={120}
+              startDelay={0.9}
+              animateBy="words"
+              direction="top"
+              className="justify-center mt-1 sm:mt-2"
+            />
+          </h1>
 
           <motion.p
             variants={item}
