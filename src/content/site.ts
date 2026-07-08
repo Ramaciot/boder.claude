@@ -171,44 +171,69 @@ export const bonuses = {
 } as const;
 
 export const testimonials = {
-  title: "Descubra como ajudamos nossos clientes",
-  subtitle: "Histórias reais de negócios que cresceram com a Boder Space",
+  title: "O que nossos",
+  titleHighlight: "clientes",
+  titleEnd: "dizem",
+  subtitle: "Resultados reais de empresas que confiaram no nosso trabalho",
+  video: {
+    src: "/videos/testimonial-video.mov",
+    playLabel: "Assista o depoimento",
+    playSubtitle: "Descubra como ajudamos nossos clientes",
+  },
   items: [
     {
       name: "Ana Carolina Lima",
       company: "E-commerce de Moda",
       content:
         "Trabalhei com a Boder Space na gestão de tráfego e social media. Em 3 meses aumentamos as vendas em 250% e o engajamento nas redes sociais explodiu! Equipe muito profissional.",
+      avatar: "👩‍💼",
+      highlight: "+250%",
+      highlightLabel: "em vendas",
     },
     {
       name: "Rafael Costa",
       company: "Clínica Médica",
       content:
         "A criação do site e identidade visual da nossa clínica superou todas as expectativas. Design moderno, sofisticado e funcional. Recomendo!",
+      avatar: "👨‍⚕️",
+      highlight: "100%",
+      highlightLabel: "satisfação",
     },
     {
       name: "Mariana Ferreira",
       company: "Startup Tech",
       content:
         "A estratégia digital completa que a Boder desenvolveu nos ajudou a conquistar investidores. O trabalho de branding e presença online foi impecável!",
+      avatar: "👩‍💻",
+      highlight: "3x",
+      highlightLabel: "mais leads",
     },
     {
       name: "Pedro Henrique",
       company: "Consultoria Empresarial",
       content:
         "ROI excepcional! A gestão de tráfego pago trouxe leads altamente qualificados. Melhor investimento que fiz para o meu negócio.",
+      avatar: "👨‍💼",
+      highlight: "ROI",
+      highlightLabel: "excepcional",
     },
     {
       name: "Juliana Santos",
       company: "Academia Fitness",
       content:
         "O social media estratégico transformou nossa presença online. Posts que engajam e convertem! Nossa base de clientes cresceu 180% em 4 meses.",
+      avatar: "💪",
+      highlight: "+180%",
+      highlightLabel: "clientes",
     },
     {
       name: "Lucas Oliveira",
       company: "Restaurante Gourmet",
       content:
         "Landing page de alta conversão e campanhas certeiras. A Boder entende do negócio e entrega resultados reais. Equipe nota 10!",
+      avatar: "👨‍🍳",
+      highlight: "Nota 10",
+      highlightLabel: "atendimento",
     },
   ],
 } as const;
