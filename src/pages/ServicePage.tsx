@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import ChatBot from "@/components/ChatBot";
+import { FloatingNav } from "@/components/FloatingNav";
 import { LiquidEtherBackground } from "@/components/LiquidEtherBackground";
 import { FinalCTA } from "@/components/FinalCTA";
 import { Reveal } from "@/components/Reveal";
@@ -31,6 +32,7 @@ const ServicePage = () => {
       <LiquidEtherBackground />
       <div className="relative z-10">
       <Header />
+      <FloatingNav />
       <main>
         {/* Hero do serviço */}
         <section className="relative overflow-hidden pt-32 sm:pt-40 pb-16 sm:pb-24">

@@ -11,6 +11,7 @@ import { FAQ } from "@/components/FAQ";
 import { FinalCTA } from "@/components/FinalCTA";
 import { Footer } from "@/components/Footer";
 import ChatBot from "@/components/ChatBot";
+import { FloatingNav } from "@/components/FloatingNav";
 import { LiquidEtherBackground } from "@/components/LiquidEtherBackground";
 
 interface HomeProps {
@@ -37,6 +38,7 @@ const Home = ({ scrollTo }: HomeProps) => {
       <LiquidEtherBackground />
       <div className="relative z-10">
         <Header />
+        <FloatingNav />
         <main>
           <Hero />
           <Bonuses />
