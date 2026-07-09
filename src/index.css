@@ -44,12 +44,13 @@
 
     --glow-primary: 173 80% 35%;
 
-    /* Camada principal: fundo contínuo do topo ao fim (variação sutil de tom
-       da mesma cor de background — sem novas cores). */
-    --page-gradient: radial-gradient(
-      ellipse 120% 80% at 50% 0%,
-      hsl(220 16% 99%) 0%,
-      hsl(220 14% 96%) 100%
+    /* Fundo único, limpo e com leve tom teal da marca no topo — transição
+       vertical suave (sem degraus/faixas entre seções). */
+    --page-gradient: linear-gradient(
+      180deg,
+      hsl(174 34% 97%) 0%,
+      hsl(200 20% 98%) 26%,
+      hsl(220 14% 97%) 100%
     );
   }
 
@@ -85,10 +86,12 @@
 
     --glow-primary: 173 80% 45%;
 
-    /* Camada principal escura: gradiente contínuo, mesma matiz do background. */
-    --page-gradient: radial-gradient(
-      ellipse 120% 80% at 50% 0%,
-      hsl(222 22% 9%) 0%,
+    /* Fundo único e limpo, com leve tom teal da marca no topo que escurece
+       muito gradualmente — sem degraus/faixas visíveis entre seções. */
+    --page-gradient: linear-gradient(
+      180deg,
+      hsl(182 26% 9%) 0%,
+      hsl(210 22% 7%) 24%,
       hsl(222 27% 5%) 100%
     );
   }

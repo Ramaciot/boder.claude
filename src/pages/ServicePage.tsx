@@ -36,7 +36,6 @@ const ServicePage = () => {
       <main>
         {/* Hero do serviço */}
         <section className="relative overflow-hidden pt-32 sm:pt-40 pb-16 sm:pb-24">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,hsl(var(--primary)/0.1),transparent)]" aria-hidden />
           <div className="container relative z-10">
             <Reveal className="max-w-3xl mx-auto text-center">
               <Link

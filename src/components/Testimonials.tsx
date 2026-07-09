@@ -168,26 +168,6 @@ export const Testimonials = () => {
 
   return (
     <section id="depoimentos" className="py-20 sm:py-32 relative overflow-hidden">
-      {/* Profundidade sutil — sem faixa opaca que corte a continuidade */}
-      <div
-        className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_120%,hsl(var(--primary)/0.08),transparent)] pointer-events-none"
-        aria-hidden
-      />
-
-      {/* Orbes flutuantes */}
-      <motion.div
-        className="absolute top-40 left-[5%] w-72 h-72 bg-gradient-to-br from-primary/15 via-accent/10 to-transparent rounded-full blur-3xl"
-        animate={{ scale: [1, 1.15, 1], opacity: [0.3, 0.5, 0.3] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        aria-hidden
-      />
-      <motion.div
-        className="absolute bottom-40 right-[5%] w-64 h-64 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent rounded-full blur-3xl"
-        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        aria-hidden
-      />
-
       <div className="container relative z-10">
         {/* Cabeçalho */}
         <motion.div

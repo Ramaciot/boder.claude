@@ -31,7 +31,6 @@ export const Hero = () => {
     target: sectionRef,
     offset: ["start start", "end start"],
   });
-  const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "15%"]);
   const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0.3]);
 
@@ -41,28 +40,6 @@ export const Hero = () => {
       id="home"
       className="min-h-[100dvh] flex items-center justify-center relative overflow-hidden pt-24 sm:pt-32 pb-16"
     >
-      {/* Fundo com malha de gradientes da marca + parallax */}
-      <motion.div className="absolute inset-0" style={{ y: backgroundY }} aria-hidden>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,hsl(var(--primary)/0.1),transparent)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_60%_at_80%_60%,hsl(var(--primary)/0.05),transparent)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_20%_80%,hsl(var(--accent)/0.06),transparent)]" />
-        <motion.div
-          className="absolute top-1/4 left-[10%] w-48 h-48 sm:w-72 sm:h-72 lg:w-96 lg:h-96 bg-gradient-to-br from-primary/15 via-primary/8 to-transparent rounded-full blur-3xl"
-          animate={{ opacity: [0.2, 0.4, 0.2], scale: [1, 1.08, 1] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute bottom-1/4 right-[10%] w-40 h-40 sm:w-56 sm:h-56 lg:w-80 lg:h-80 bg-gradient-to-br from-accent/12 via-accent/6 to-transparent rounded-full blur-3xl"
-          animate={{ opacity: [0.2, 0.35, 0.2], scale: [1, 1.06, 1] }}
-          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        />
-        <motion.div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] sm:w-[600px] sm:h-[600px] lg:w-[800px] lg:h-[800px] bg-gradient-to-br from-primary/3 via-transparent to-accent/3 rounded-full blur-3xl"
-          animate={{ y: [-8, 8, -8] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-      </motion.div>
-
       <motion.div className="container relative z-10" style={{ y: contentY, opacity }}>
         <motion.div
           className="max-w-4xl lg:max-w-5xl mx-auto text-center space-y-7 sm:space-y-9"

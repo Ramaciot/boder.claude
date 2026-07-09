@@ -7,8 +7,6 @@ const pillarIcons = [Target, Zap, Workflow, Users];
 
 export const Authority = () => (
   <section className="py-16 sm:py-24 lg:py-32 relative overflow-hidden">
-    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.02] to-transparent pointer-events-none" />
-
     <div className="container relative z-10">
       <SectionHeading
         badge="Por que a Boder"
