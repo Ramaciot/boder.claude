@@ -17,6 +17,7 @@ import logoBlack from "@/assets/boder-logo-black.png";
 const navItems = [
   { name: "Home", link: "/#home" },
   { name: "Serviços", link: "/#servicos" },
+  { name: "Portfólio", link: "/portfolio" },
   { name: "Depoimentos", link: "/#depoimentos" },
   { name: "FAQ", link: "/#faq" },
 ];

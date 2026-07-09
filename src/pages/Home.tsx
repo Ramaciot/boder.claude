@@ -3,7 +3,9 @@ import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { Bonuses } from "@/components/Bonuses";
 import { Services } from "@/components/Services";
+import { ServiceShowcase } from "@/components/ServiceShowcase";
 import { Stats } from "@/components/Stats";
+import { AppPromoSection } from "@/components/AppPromoSection";
 import { Testimonials } from "@/components/Testimonials";
 import { Team } from "@/components/Team";
 import { Authority } from "@/components/Authority";
@@ -43,7 +45,9 @@ const Home = ({ scrollTo }: HomeProps) => {
           <Hero />
           <Bonuses />
           <Services />
+          <ServiceShowcase />
           <Stats />
+          <AppPromoSection />
           <Testimonials />
           <Team />
           <Authority />

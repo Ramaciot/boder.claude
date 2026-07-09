@@ -9,6 +9,7 @@ import logoBlack from "@/assets/boder-logo-black.png";
 const navItems = [
   { label: "Home", hash: "#home" },
   { label: "Serviços", hash: "#servicos" },
+  { label: "Portfólio", to: "/portfolio" },
   { label: "Depoimentos", hash: "#depoimentos" },
   { label: "FAQ", hash: "#faq" },
 ];
@@ -64,15 +65,19 @@ export const Header = () => {
 
           {/* Navegação desktop */}
           <div className="hidden lg:flex items-center gap-7 xl:gap-9">
-            {navItems.map((item) => (
-              <button
-                key={item.label}
-                onClick={() => goToSection(item.hash)}
-                className="relative text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-300 after:absolute after:-bottom-1 after:left-0 after:right-0 after:h-[2px] after:origin-center after:scale-x-0 hover:after:scale-x-100 after:bg-gradient-to-r after:from-transparent after:via-primary after:to-transparent after:transition-transform after:duration-300"
-              >
-                {item.label}
-              </button>
-            ))}
+            {navItems.map((item) => {
+              const cls =
+                "relative text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-300 after:absolute after:-bottom-1 after:left-0 after:right-0 after:h-[2px] after:origin-center after:scale-x-0 hover:after:scale-x-100 after:bg-gradient-to-r after:from-transparent after:via-primary after:to-transparent after:transition-transform after:duration-300";
+              return item.to ? (
+                <Link key={item.label} to={item.to} className={cls}>
+                  {item.label}
+                </Link>
+              ) : (
+                <button key={item.label} onClick={() => goToSection(item.hash!)} className={cls}>
+                  {item.label}
+                </button>
+              );
+            })}
           </div>
 
           {/* Ações desktop */}
@@ -165,15 +170,19 @@ export const Header = () => {
         {/* Menu mobile */}
         {isMenuOpen && (
           <div className="lg:hidden mt-3 p-4 space-y-1 glass-container rounded-3xl">
-            {navItems.map((item) => (
-              <button
-                key={item.label}
-                onClick={() => goToSection(item.hash)}
-                className="block w-full text-left px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {item.label}
-              </button>
-            ))}
+            {navItems.map((item) => {
+              const cls =
+                "block w-full text-left px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors";
+              return item.to ? (
+                <Link key={item.label} to={item.to} className={cls} onClick={() => setIsMenuOpen(false)}>
+                  {item.label}
+                </Link>
+              ) : (
+                <button key={item.label} onClick={() => goToSection(item.hash!)} className={cls}>
+                  {item.label}
+                </button>
+              );
+            })}
 
             <div className="flex items-center gap-3 px-4 py-3">
               {socialIcons.map(({ label, href, Icon, color }) => (
