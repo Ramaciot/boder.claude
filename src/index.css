@@ -43,6 +43,14 @@
     --radius: 0.875rem;
 
     --glow-primary: 173 80% 35%;
+
+    /* Camada principal: fundo contínuo do topo ao fim (variação sutil de tom
+       da mesma cor de background — sem novas cores). */
+    --page-gradient: radial-gradient(
+      ellipse 120% 80% at 50% 0%,
+      hsl(220 16% 99%) 0%,
+      hsl(220 14% 96%) 100%
+    );
   }
 
   /* Tema escuro */
@@ -76,6 +84,13 @@
     --ring: 173 80% 45%;
 
     --glow-primary: 173 80% 45%;
+
+    /* Camada principal escura: gradiente contínuo, mesma matiz do background. */
+    --page-gradient: radial-gradient(
+      ellipse 120% 80% at 50% 0%,
+      hsl(222 22% 9%) 0%,
+      hsl(222 27% 5%) 100%
+    );
   }
 }
 
@@ -90,7 +105,12 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
+    /* Fundo contínuo — um único gradiente do topo ao fim do documento, sem faixas. */
+    background-color: hsl(var(--background));
+    background-image: var(--page-gradient);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
     font-feature-settings: "cv11", "ss01";
     text-rendering: optimizeLegibility;
     line-height: 1.6;

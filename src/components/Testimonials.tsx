@@ -168,11 +168,11 @@ export const Testimonials = () => {
 
   return (
     <section id="depoimentos" className="py-20 sm:py-32 relative overflow-hidden">
-      {/* Fundo em gradiente premium */}
-      <div className="absolute inset-0" aria-hidden>
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/20 to-background" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_120%,hsl(var(--primary)/0.1),transparent)]" />
-      </div>
+      {/* Profundidade sutil — sem faixa opaca que corte a continuidade */}
+      <div
+        className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_120%,hsl(var(--primary)/0.08),transparent)] pointer-events-none"
+        aria-hidden
+      />
 
       {/* Orbes flutuantes */}
       <motion.div
