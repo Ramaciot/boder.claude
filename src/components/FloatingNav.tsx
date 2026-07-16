@@ -115,12 +115,12 @@ export const FloatingNav = ({ className }: { className?: string }) => {
         </button>
 
         {/* Login shimmer */}
-        <a href={contact.loginUrl} className="bookmarkBtn group hidden sm:flex" aria-label="Login">
+        <Link to="/auth" className="bookmarkBtn group hidden sm:flex" aria-label="Login">
           <span className="IconContainer">
             <LogIn className="btn-icon-svg" strokeWidth={2} />
           </span>
           <p className="btn-text">Login</p>
-        </a>
+        </Link>
 
         {/* Agendar Meet */}
         <button

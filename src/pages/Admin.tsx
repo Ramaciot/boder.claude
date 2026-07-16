@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import {
   AlertTriangle,
   Calendar,
@@ -52,88 +52,6 @@ const statusBadge = (status: Meeting["status"]) => {
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${it.cls}`}>
       {it.label}
     </span>
-  );
-};
-
-/* ---------------------------------- Login ---------------------------------- */
-
-const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
-  const [email, setEmail] = useState("kaueramaciott@gmail.com");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!isBackendEnabled()) {
-      setError("Backend não configurado (VITE_SUPABASE_PUBLISHABLE_KEY ausente).");
-      return;
-    }
-
-    setLoading(true);
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-
-    if (authError) {
-      setError("Email ou senha inválidos.");
-      return;
-    }
-    onLogin();
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-3xl bg-card/80 backdrop-blur-xl border border-border/60 p-8 sm:p-10 shadow-2xl shadow-primary/5">
-        <div className="flex flex-col items-center mb-8">
-          <img src={logoWhite} alt="Boder Space" className="h-12 w-auto mb-4" />
-          <h1 className="text-2xl font-bold">Painel Interno</h1>
-          <p className="text-sm text-muted-foreground mt-1">Acesso restrito à equipe Boder</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="adm-email" className="text-sm font-medium">Email</label>
-            <input
-              id="adm-email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={inputCls}
-            />
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="adm-pass" className="text-sm font-medium">Senha</label>
-            <input
-              id="adm-pass"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className={inputCls}
-            />
-          </div>
-
-          {error && <p className="text-sm text-destructive text-center">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-primary text-primary-foreground py-3 font-semibold shadow-lg shadow-primary/20 hover:brightness-110 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
-          >
-            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            Entrar
-          </button>
-        </form>
-
-        <Link to="/" className="block text-center text-sm text-muted-foreground hover:text-foreground mt-6 transition-colors">
-          ← Voltar ao site
-        </Link>
-      </div>
-    </div>
   );
 };
 
@@ -574,7 +492,7 @@ const Admin = () => {
   }
 
   if (!session) {
-    return <LoginScreen onLogin={() => setSession(true)} />;
+    return <Navigate to="/auth" replace />;
   }
 
   return (

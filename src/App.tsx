@@ -9,6 +9,7 @@ import { MeetingBookingForm } from "@/components/MeetingBookingForm";
 // Rotas com Supabase — lazy para manter o bundle inicial leve.
 const Portfolio = lazy(() => import("@/pages/Portfolio"));
 const Admin = lazy(() => import("@/pages/Admin"));
+const Auth = lazy(() => import("@/pages/Auth"));
 
 const ScrollToTop = () => {
   const { pathname, hash } = useLocation();
@@ -39,6 +40,14 @@ const App = () => (
         element={
           <Suspense fallback={<div className="min-h-screen" />}>
             <Portfolio />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/auth"
+        element={
+          <Suspense fallback={<div className="min-h-screen" />}>
+            <Auth />
           </Suspense>
         }
       />

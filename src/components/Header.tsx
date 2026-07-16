@@ -119,12 +119,12 @@ export const Header = () => {
             </button>
 
             {/* Login shimmer */}
-            <a href={contact.loginUrl} className="bookmarkBtn group" aria-label="Login">
+            <Link to="/auth" className="bookmarkBtn group" aria-label="Login">
               <span className="IconContainer">
                 <LogIn className="btn-icon-svg" strokeWidth={2} />
               </span>
               <p className="btn-text">Login</p>
-            </a>
+            </Link>
 
             {/* Atalho App */}
             <a
@@ -200,13 +200,14 @@ export const Header = () => {
             </div>
 
             <div className="px-4 pt-1 space-y-2">
-              <a
-                href={contact.loginUrl}
+              <Link
+                to="/auth"
+                onClick={() => setIsMenuOpen(false)}
                 className="flex items-center justify-center gap-2 w-full rounded-xl border border-border/60 py-2.5 text-sm font-medium hover:bg-foreground/5 transition-colors"
               >
                 <LogIn className="h-4 w-4" />
                 Login
-              </a>
+              </Link>
               <button
                 onClick={() => {
                   setIsMenuOpen(false);
