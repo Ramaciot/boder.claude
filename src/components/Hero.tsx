@@ -87,24 +87,6 @@ export const Hero = () => {
                 animationDuration={0.5}
                 pauseBetweenAnimations={1}
               />
-              {/* Sublinhado desenhado à mão */}
-              <motion.svg
-                className="absolute -bottom-1 sm:-bottom-2 left-0 w-full h-2 sm:h-3"
-                viewBox="0 0 300 12"
-                fill="none"
-                preserveAspectRatio="none"
-                aria-hidden
-              >
-                <motion.path
-                  d="M2 8.5C50 2.5 100 2.5 150 5.5C200 8.5 250 6.5 298 4.5"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 1 }}
-                  transition={{ duration: 1.4, delay: 1.6, ease: [0.25, 0.1, 0.25, 1] }}
-                />
-              </motion.svg>
             </span>
             <BlurText
               as="span"
@@ -136,13 +118,13 @@ export const Hero = () => {
             >
               <button
                 onClick={openMeetingForm}
-                className="relative inline-flex items-center justify-center gap-2 w-full sm:w-auto text-base px-8 py-4 rounded-full bg-primary text-primary-foreground font-medium shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25 transition-shadow duration-400 group overflow-hidden"
+                className="glass-container relative inline-flex items-center justify-center gap-2 w-full sm:w-auto text-base px-8 py-4 rounded-full text-foreground font-semibold !border-primary/40 shadow-lg shadow-primary/10 hover:shadow-xl hover:shadow-primary/25 hover:!border-primary/70 transition-all duration-400 group overflow-hidden"
               >
                 {/* Shine ao passar o mouse */}
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/8 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
                 <span className="relative flex items-center gap-2">
                   {hero.ctaPrimary}
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform duration-400" />
+                  <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-0.5 transition-transform duration-400" />
                 </span>
               </button>
             </motion.div>
@@ -154,7 +136,7 @@ export const Hero = () => {
             >
               <a
                 href="#servicos"
-                className="inline-flex items-center justify-center w-full sm:w-auto text-base px-8 py-4 rounded-full border border-border/50 bg-background/40 backdrop-blur-xl text-foreground font-medium hover:bg-primary/10 hover:border-primary/30 transition-colors duration-400"
+                className="glass-container inline-flex items-center justify-center w-full sm:w-auto text-base px-8 py-4 rounded-full text-foreground font-medium hover:!border-primary/40 hover:shadow-lg hover:shadow-primary/10 transition-all duration-400"
               >
                 {hero.ctaSecondary}
               </a>
