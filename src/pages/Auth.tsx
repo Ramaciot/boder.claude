@@ -110,7 +110,13 @@ export default function Auth() {
     setIsLoading(false);
 
     if (authError) {
-      setError("Email ou senha incorretos.");
+      // Mostra o motivo real do Supabase — evita diagnóstico às cegas
+      const knownMessages: Record<string, string> = {
+        "Invalid login credentials": "Email ou senha incorretos.",
+        "Email not confirmed":
+          "Este email ainda não foi confirmado no Supabase. Em Authentication → Users, edite o usuário e marque como confirmado (ou recrie com \"Auto Confirm User\" ativado).",
+      };
+      setError(knownMessages[authError.message] ?? `Erro do Supabase: ${authError.message}`);
       return;
     }
 
