@@ -11,7 +11,7 @@ import { chatConfig } from "./boderChat";
  * (protegida por RLS). Sem a chave, o portfólio mostra estado vazio amigável.
  */
 export const supabase = createClient(chatConfig.url, chatConfig.publishableKey || "public-anon-key", {
-  auth: { persistSession: false },
+  auth: { persistSession: true, storageKey: "boder-site-auth" },
 });
 
 export const isPortfolioEnabled = () => chatConfig.publishableKey.length > 0;

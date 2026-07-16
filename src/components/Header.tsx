@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowRight, Facebook, Instagram, Linkedin, LogIn, Menu, MessageCircle, Moon, Smartphone, Sun, X } from "lucide-react";
-import { contact, whatsappLink } from "@/content/site";
+import { contact } from "@/content/site";
+import { useMeetingForm } from "@/contexts/MeetingFormContext";
 import { useTheme } from "@/lib/theme";
 import logoWhite from "@/assets/boder-logo.png";
 import logoBlack from "@/assets/boder-logo-black.png";
@@ -26,6 +27,7 @@ export const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { openMeetingForm } = useMeetingForm();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -134,17 +136,15 @@ export const Header = () => {
             </a>
 
             {/* Agendar Meet */}
-            <a
-              href={whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={openMeetingForm}
               className="inline-flex items-center gap-2 rounded-full pl-2 pr-4 py-1.5 bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:brightness-110 transition-all duration-300 group"
             >
               <span className="w-7 h-7 rounded-full bg-primary-foreground/20 flex items-center justify-center">
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </span>
               Agendar Meet
-            </a>
+            </button>
           </div>
 
           {/* Botão do menu mobile */}
@@ -207,15 +207,16 @@ export const Header = () => {
                 <LogIn className="h-4 w-4" />
                 Login
               </a>
-              <a
-                href={whatsappLink}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  openMeetingForm();
+                }}
                 className="flex items-center justify-center gap-2 w-full rounded-xl bg-primary text-primary-foreground py-2.5 text-sm font-semibold"
               >
                 Agendar Meet
                 <ArrowRight className="h-4 w-4" />
-              </a>
+              </button>
             </div>
           </div>
         )}

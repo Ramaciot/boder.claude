@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { contact } from "@/content/site";
+import { useMeetingForm } from "@/contexts/MeetingFormContext";
 import { chatEndpoint, chatConfig, isAIChatEnabled } from "@/lib/boderChat";
 
 interface Message {
@@ -84,6 +85,7 @@ const getDailyWelcomeMessage = () => {
 };
 
 const ChatBot = () => {
+  const { openMeetingForm } = useMeetingForm();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatHistory, setChatHistory] = useState<{ role: string; content: string }[]>([]);
@@ -243,6 +245,11 @@ const ChatBot = () => {
 
     switch (option.action) {
       case "meeting":
+        // Abre o formulário de agendamento (igual ao site oficial)
+        setIsOpen(false);
+        openMeetingForm();
+        break;
+
       case "whatsapp":
         if (option.whatsappMessage) openWhatsApp(option.whatsappMessage);
         break;
@@ -282,11 +289,10 @@ const ChatBot = () => {
 
     const lowerMessage = messageText.toLowerCase();
     if (lowerMessage.includes("reunião") || lowerMessage.includes("agendar")) {
-      addBotMessage("Ótimo! Vou te levar para o WhatsApp para agendarmos sua reunião. 📅");
+      addBotMessage("Ótimo! Vou abrir o formulário de agendamento para você. 📅");
       setTimeout(() => {
-        openWhatsApp(
-          "Olá! Vim pelo site da Boder Space e gostaria de agendar uma reunião para conhecer os serviços.",
-        );
+        setIsOpen(false);
+        openMeetingForm();
       }, 1500);
     } else if (isAIChatEnabled()) {
       setIsAIMode(true);

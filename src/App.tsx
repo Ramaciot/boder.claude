@@ -3,9 +3,12 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import Home from "@/pages/Home";
 import ServicePage from "@/pages/ServicePage";
 import NotFound from "@/pages/NotFound";
+import { MeetingFormProvider } from "@/contexts/MeetingFormContext";
+import { MeetingBookingForm } from "@/components/MeetingBookingForm";
 
-// Portfólio carrega o cliente Supabase — lazy para manter o bundle inicial leve.
+// Rotas com Supabase — lazy para manter o bundle inicial leve.
 const Portfolio = lazy(() => import("@/pages/Portfolio"));
+const Admin = lazy(() => import("@/pages/Admin"));
 
 const ScrollToTop = () => {
   const { pathname, hash } = useLocation();
@@ -25,7 +28,7 @@ const ScrollToTop = () => {
 };
 
 const App = () => (
-  <>
+  <MeetingFormProvider>
     <ScrollToTop />
     <Routes>
       <Route path="/" element={<Home />} />
@@ -39,9 +42,18 @@ const App = () => (
           </Suspense>
         }
       />
+      <Route
+        path="/admin"
+        element={
+          <Suspense fallback={<div className="min-h-screen" />}>
+            <Admin />
+          </Suspense>
+        }
+      />
       <Route path="*" element={<NotFound />} />
     </Routes>
-  </>
+    <MeetingBookingForm />
+  </MeetingFormProvider>
 );
 
 export default App;

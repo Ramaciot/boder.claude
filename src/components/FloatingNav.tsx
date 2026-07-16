@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
 import { ArrowRight, Facebook, Instagram, Linkedin, LogIn, MessageCircle, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { contact, whatsappLink } from "@/content/site";
+import { contact } from "@/content/site";
+import { useMeetingForm } from "@/contexts/MeetingFormContext";
 import { useTheme } from "@/lib/theme";
 import logoWhite from "@/assets/boder-logo.png";
 import logoBlack from "@/assets/boder-logo-black.png";
@@ -32,6 +33,7 @@ const socialIcons = [
 export const FloatingNav = ({ className }: { className?: string }) => {
   const { scrollY } = useScroll();
   const { theme, toggleTheme } = useTheme();
+  const { openMeetingForm } = useMeetingForm();
   const [visible, setVisible] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -121,10 +123,8 @@ export const FloatingNav = ({ className }: { className?: string }) => {
         </a>
 
         {/* Agendar Meet */}
-        <a
-          href={whatsappLink}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={openMeetingForm}
           className="inline-flex items-center gap-2 rounded-full pl-1.5 pr-4 py-1.5 bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/20 hover:brightness-110 transition-all duration-300 group"
         >
           <span className="w-7 h-7 rounded-full bg-primary-foreground/20 flex items-center justify-center">
@@ -132,7 +132,7 @@ export const FloatingNav = ({ className }: { className?: string }) => {
           </span>
           <span className="hidden sm:inline">Agendar Meet</span>
           <span className="sm:hidden">Meet</span>
-        </a>
+        </button>
       </motion.div>
     </AnimatePresence>
   );

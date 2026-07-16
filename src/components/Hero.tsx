@@ -2,7 +2,8 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, BarChart3, Clock, GitBranch, Smartphone, Sparkles, TrendingUp } from "lucide-react";
 import BlurText from "./BlurText";
-import { hero, whatsappLink } from "@/content/site";
+import { hero } from "@/content/site";
+import { useMeetingForm } from "@/contexts/MeetingFormContext";
 
 const chipIcons = [Smartphone, BarChart3, Clock, GitBranch, TrendingUp];
 
@@ -25,6 +26,7 @@ const item = {
 
 export const Hero = () => {
   const sectionRef = useRef<HTMLElement>(null);
+  const { openMeetingForm } = useMeetingForm();
 
   // Parallax de scroll — fundo e conteúdo em velocidades diferentes
   const { scrollYProgress } = useScroll({
@@ -132,11 +134,9 @@ export const Hero = () => {
               transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
               className="w-full sm:w-auto"
             >
-              <a
-                href={whatsappLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative inline-flex items-center justify-center gap-2 w-full sm:w-auto text-base px-8 py-4 rounded-2xl bg-primary text-primary-foreground font-medium shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25 transition-shadow duration-400 group overflow-hidden"
+              <button
+                onClick={openMeetingForm}
+                className="relative inline-flex items-center justify-center gap-2 w-full sm:w-auto text-base px-8 py-4 rounded-full bg-primary text-primary-foreground font-medium shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25 transition-shadow duration-400 group overflow-hidden"
               >
                 {/* Shine ao passar o mouse */}
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/8 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
@@ -144,7 +144,7 @@ export const Hero = () => {
                   {hero.ctaPrimary}
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform duration-400" />
                 </span>
-              </a>
+              </button>
             </motion.div>
             <motion.div
               whileHover={{ scale: 1.02, y: -1 }}
@@ -154,7 +154,7 @@ export const Hero = () => {
             >
               <a
                 href="#servicos"
-                className="inline-flex items-center justify-center w-full sm:w-auto text-base px-8 py-4 rounded-2xl border border-border/50 bg-background/40 backdrop-blur-xl text-foreground font-medium hover:bg-primary/10 hover:border-primary/30 transition-colors duration-400"
+                className="inline-flex items-center justify-center w-full sm:w-auto text-base px-8 py-4 rounded-full border border-border/50 bg-background/40 backdrop-blur-xl text-foreground font-medium hover:bg-primary/10 hover:border-primary/30 transition-colors duration-400"
               >
                 {hero.ctaSecondary}
               </a>

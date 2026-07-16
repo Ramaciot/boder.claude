@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "./Reveal";
-import { finalCta, whatsappLink } from "@/content/site";
+import { finalCta } from "@/content/site";
+import { useMeetingForm } from "@/contexts/MeetingFormContext";
 
 export const FinalCTA = () => (
   <section className="py-16 sm:py-24 relative overflow-hidden">
@@ -17,17 +18,22 @@ export const FinalCTA = () => (
         <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-9 max-w-2xl mx-auto">
           {finalCta.subtitle}
         </p>
-        <a
-          href={whatsappLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-base shadow-xl shadow-primary/25 hover:scale-[1.02] hover:brightness-110 active:scale-[0.98] transition-all duration-300 group"
-        >
-          {finalCta.button}
-          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-        </a>
+        <FinalCTAButton />
         <p className="mt-5 text-xs sm:text-sm text-muted-foreground/70">{finalCta.note}</p>
       </Reveal>
     </div>
   </section>
 );
+
+const FinalCTAButton = () => {
+  const { openMeetingForm } = useMeetingForm();
+  return (
+    <button
+      onClick={openMeetingForm}
+      className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-primary text-primary-foreground font-semibold text-base shadow-xl shadow-primary/25 hover:scale-[1.02] hover:brightness-110 active:scale-[0.98] transition-all duration-300 group"
+    >
+      {finalCta.button}
+      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+    </button>
+  );
+};
