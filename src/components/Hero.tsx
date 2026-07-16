@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, BarChart3, Clock, GitBranch, Smartphone, Sparkles, TrendingUp } from "lucide-react";
 import BlurText from "./BlurText";
+import TrueFocus from "./TrueFocus";
 import { hero } from "@/content/site";
 import { useMeetingForm } from "@/contexts/MeetingFormContext";
 
@@ -76,16 +77,15 @@ export const Hero = () => {
               direction="top"
               className="justify-center mb-1 sm:mb-2"
             />
-            <span className="relative inline-block">
-              <BlurText
-                as="span"
-                text={hero.titleHighlight}
-                delay={120}
-                startDelay={0.45}
-                animateBy="words"
-                direction="top"
-                className="justify-center"
-                segmentClassName="text-gradient"
+            <span className="relative block hero-focus">
+              <TrueFocus
+                sentence={hero.titleHighlight}
+                manualMode={false}
+                blurAmount={5}
+                borderColor="hsl(173 80% 45%)"
+                glowColor="hsla(173, 80%, 45%, 0.6)"
+                animationDuration={0.5}
+                pauseBetweenAnimations={1}
               />
               {/* Sublinhado desenhado à mão */}
               <motion.svg

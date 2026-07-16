@@ -165,6 +165,14 @@
       0 0 20px hsl(var(--glow-primary) / 0.25),
       0 0 40px hsl(var(--glow-primary) / 0.1);
   }
+
+  /* Palavras do TrueFocus no hero herdam o gradiente teal da marca */
+  .hero-focus .focus-word {
+    background-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
 }
 
 /* ============================================================
