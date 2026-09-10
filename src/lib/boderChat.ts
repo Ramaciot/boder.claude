@@ -8,7 +8,7 @@
  * em vez do modo IA.
  */
 export const chatConfig = {
-  url: (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "https://rcbjmwisgodsnvssrmjq.supabase.co",
+  url: (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "https://skeqkpjqwkkncuxmirbb.supabase.co",
   publishableKey: (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ?? "",
 };
 
