@@ -1,19 +1,15 @@
 import { useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
-import { Bonuses } from "@/components/Bonuses";
 import { Services } from "@/components/Services";
-import { ServiceShowcase } from "@/components/ServiceShowcase";
-import { Stats } from "@/components/Stats";
-import { AppPromoSection } from "@/components/AppPromoSection";
+import { PortfolioSection } from "@/components/PortfolioSection";
+import { AppSection } from "@/components/AppSection";
 import { Testimonials } from "@/components/Testimonials";
 import { Team } from "@/components/Team";
-import { Authority } from "@/components/Authority";
 import { FAQ } from "@/components/FAQ";
 import { FinalCTA } from "@/components/FinalCTA";
 import { Footer } from "@/components/Footer";
 import ChatBot from "@/components/ChatBot";
-import { FloatingNav } from "@/components/FloatingNav";
 import { LiquidEtherBackground } from "@/components/LiquidEtherBackground";
 
 interface HomeProps {
@@ -21,43 +17,42 @@ interface HomeProps {
   scrollTo?: string;
 }
 
+/**
+ * Página inicial — mesma ordem de seções do site oficial:
+ * Hero → Serviços → Sites que Vendem → App → Depoimentos → Equipe → FAQ → CTA.
+ */
 const Home = ({ scrollTo }: HomeProps) => {
   useEffect(() => {
-    document.title =
-      "Boder Space - Agência de Marketing Digital | Impulsione seu Negócio";
+    document.title = "Boder Space - Agência de Marketing Digital | Impulsione seu Negócio";
   }, []);
 
   useEffect(() => {
     if (!scrollTo) return;
     const timer = window.setTimeout(() => {
-      document.getElementById(scrollTo)?.scrollIntoView({ behavior: "smooth" });
+      document.getElementById(scrollTo)?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
     return () => window.clearTimeout(timer);
   }, [scrollTo]);
 
   return (
-    <div className="min-h-screen">
+    <>
       <LiquidEtherBackground />
-      <div className="relative z-10">
+      <div className="relative z-10 min-h-screen">
         <Header />
-        <FloatingNav />
         <main>
           <Hero />
-          <Bonuses />
           <Services />
-          <ServiceShowcase />
-          <Stats />
-          <AppPromoSection />
+          <PortfolioSection />
+          <AppSection />
           <Testimonials />
           <Team />
-          <Authority />
           <FAQ />
           <FinalCTA />
         </main>
         <Footer />
-        <ChatBot />
       </div>
-    </div>
+      <ChatBot />
+    </>
   );
 };
 

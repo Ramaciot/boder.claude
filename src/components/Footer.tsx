@@ -25,6 +25,7 @@ const navigation = [
   { label: "Serviços", href: "/#servicos" },
   { label: "Depoimentos", href: "/#depoimentos" },
   { label: "FAQ", href: "/#faq" },
+  { label: "Portfólio", href: "/portfolio" },
 ];
 
 export const Footer = () => {

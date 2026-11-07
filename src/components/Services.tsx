@@ -1,123 +1,141 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ArrowRight, Bot, Check, Globe, Rocket, Share2, Star, TrendingUp } from "lucide-react";
-import { ParallaxCard } from "./ParallaxCard";
-import { SectionHeading } from "./SectionHeading";
-import { staggerContainer, staggerItem } from "@/lib/animations";
+import { ArrowRight, Bot, Check, Globe, Share2, Star, Target, TrendingUp, type LucideIcon } from "lucide-react";
 import { services } from "@/content/site";
 
-const serviceGradients: Record<string, string> = {
-  "sites-landing-pages": "from-blue-500/20 via-cyan-500/10 to-transparent",
-  "social-media": "from-amber-500/20 via-orange-500/10 to-transparent",
-  "ia-atendimento": "from-violet-500/20 via-purple-500/10 to-transparent",
-  "gestao-trafego": "from-emerald-500/20 via-green-500/10 to-transparent",
-  "estrategia-digital": "from-rose-500/20 via-pink-500/10 to-transparent",
-};
-
-const serviceIcons: Record<string, typeof Globe> = {
+const icons: Record<string, LucideIcon> = {
   "sites-landing-pages": Globe,
   "social-media": Share2,
   "ia-atendimento": Bot,
   "gestao-trafego": TrendingUp,
-  "estrategia-digital": Rocket,
+  "estrategia-digital": Target,
 };
 
-const badgeLabels = {
-  popular: "Mais Popular",
-  recommended: "Recomendado",
-} as const;
+/** Tópicos curtos exibidos nos cards da home (iguais ao site oficial). */
+const cardFeatures: Record<string, string[]> = {
+  "sites-landing-pages": ["Design Responsivo", "SEO Otimizado", "Alta Performance"],
+  "social-media": ["Conteúdo Estratégico", "Calendário Editorial", "Análise de Métricas"],
+  "ia-atendimento": ["Respostas Instantâneas", "Integração WhatsApp", "Aprendizado Contínuo"],
+  "gestao-trafego": ["Meta Ads", "Google Ads", "Relatórios Detalhados"],
+  "estrategia-digital": ["Consultoria Estratégica", "Plano de Ação", "Acompanhamento Mensal"],
+};
 
-export const Services = () => (
-  <section id="servicos" className="py-16 sm:py-24 lg:py-32 relative overflow-hidden">
-    <div className="container relative z-10">
-      <SectionHeading
-        badge="Nossos Serviços"
-        title="Soluções para"
-        highlight="escalar seu negócio"
-        subtitle="Cada serviço é pensado para entregar resultados mensuráveis"
-      />
+/** Serviços — grid de cards de vidro idêntico ao site oficial. */
+export const Services = () => {
+  const isOdd = services.length % 2 === 1;
 
-      <motion.div
-        className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto"
-        variants={staggerContainer}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.1 }}
-      >
-        {services.map((service) => {
-          const Icon = serviceIcons[service.slug] ?? Globe;
-          const isHighlighted = service.badge !== null;
+  return (
+    <section id="servicos" className="py-20 sm:py-32 bg-transparent relative overflow-hidden isolate">
+      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[140px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.08)_0%,transparent_70%)]" />
+      </div>
 
-          return (
-            <ParallaxCard key={service.slug} className="group h-full" intensity={6}>
-              <motion.div
-                variants={staggerItem}
-                className={`relative h-full flex flex-col p-6 lg:p-8 rounded-3xl border backdrop-blur-xl transition-all duration-500 overflow-hidden ${
-                  isHighlighted
-                    ? "bg-gradient-to-br from-primary/8 via-primary/4 to-card border-primary/25 shadow-xl shadow-primary/10"
-                    : "bg-card/70 border-border/50 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5"
-                }`}
-              >
-                {/* Overlay de gradiente no hover */}
+      <div className="container mx-auto px-6 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16 sm:mb-20">
+            <span className="inline-block text-primary/80 text-sm font-medium tracking-[0.2em] uppercase mb-6">
+              Nossos Serviços
+            </span>
+            <h2 className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight text-foreground mb-6">
+              Soluções para <span className="text-primary">escalar seu negócio</span>
+            </h2>
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto font-light">
+              Cada serviço é pensado para entregar resultados mensuráveis
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
+            {services.map((service, index) => {
+              const Icon = icons[service.slug] ?? Globe;
+              const isPopular = service.badge === "popular";
+              const isRecommended = service.badge === "recommended";
+              const highlighted = isPopular || isRecommended;
+              const isLastOdd = index === services.length - 1 && isOdd;
+
+              return (
                 <div
-                  className={`absolute inset-0 bg-gradient-to-br ${serviceGradients[service.slug] ?? ""} opacity-0 group-hover:opacity-100 transition-opacity duration-600 rounded-3xl pointer-events-none`}
-                />
-                {/* Efeito shine */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none overflow-hidden rounded-3xl">
-                  <div className="absolute -inset-full top-0 bg-gradient-to-r from-transparent via-white/3 to-transparent -skew-x-12 group-hover:animate-shine" />
-                </div>
-                {service.badge && (
-                  <span className="absolute top-4 right-4 z-10 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md shadow-primary/25">
-                    <Star className="w-3 h-3" fill="currentColor" />
-                    {badgeLabels[service.badge]}
-                  </span>
-                )}
+                  key={service.slug}
+                  className={[
+                    "group relative flex flex-col justify-between rounded-2xl sm:rounded-3xl p-4 sm:p-6 xl:p-8 transition-all duration-300 cursor-pointer backdrop-blur-xl",
+                    "hover:bg-foreground/[0.08] hover:border-foreground/30 hover:scale-[1.02] hover:z-10",
+                    highlighted
+                      ? "bg-foreground/[0.07] border border-foreground/20 ring-2 ring-foreground/30 shadow-[0_0_50px_-12px_hsl(var(--foreground)/0.2)]"
+                      : "bg-foreground/[0.03] border border-foreground/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]",
+                    isLastOdd ? "col-span-2 md:col-span-1 max-w-[50%] mx-auto md:max-w-none" : "",
+                  ].join(" ")}
+                >
+                  {highlighted && (
+                    <div className="absolute inset-[-1px] rounded-2xl sm:rounded-3xl p-[1px] bg-gradient-to-b from-foreground/40 via-transparent to-foreground/10 pointer-events-none [mask:linear-gradient(#fff_0_0)_content-box,linear-gradient(#fff_0_0)] [mask-composite:xor]" />
+                  )}
 
-                <div className="relative z-10 w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/15 transition-colors duration-400">
-                  <Icon className="w-6 h-6 lg:w-7 lg:h-7 text-primary transition-transform duration-400 group-hover:scale-105" />
-                </div>
-
-                <div className="relative z-10 flex flex-col flex-1">
-                  <h3 className="text-lg lg:text-xl mb-2.5 leading-tight">{service.title}</h3>
-                  <p className="text-sm lg:text-base text-muted-foreground mb-5 leading-relaxed">
-                    {service.description}
-                  </p>
-
-                  <ul className="space-y-2.5 mb-6">
-                    {service.features.map((feature, i) => (
-                      <motion.li
-                        key={feature}
-                        className="flex items-start gap-2.5 text-sm lg:text-base"
-                        initial={{ opacity: 0, x: -8 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.08 }}
-                        viewport={{ once: true }}
+                  <div>
+                    <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-4">
+                      <div
+                        className={`p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl shrink-0 ${highlighted ? "bg-primary/20" : "bg-foreground/10"}`}
                       >
-                        <span className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="w-3 h-3 text-primary" />
-                        </span>
-                        <span className="text-foreground/75">{feature}</span>
-                      </motion.li>
-                    ))}
-                  </ul>
+                        <Icon
+                          className={`w-4 h-4 sm:w-5 sm:h-5 ${highlighted ? "text-primary" : "text-foreground/70"}`}
+                        />
+                      </div>
+                      <h3 className="text-sm sm:text-lg font-semibold leading-tight text-foreground">
+                        {service.title}
+                      </h3>
+                    </div>
+
+                    {highlighted && (
+                      <span
+                        className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold mb-2 sm:mb-4 ${isPopular ? "bg-primary text-primary-foreground" : "bg-amber-500 text-white"}`}
+                      >
+                        <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" />
+                        {isPopular ? "Mais Popular" : "Recomendado"}
+                      </span>
+                    )}
+
+                    <p
+                      className={`text-xs sm:text-sm leading-relaxed mb-3 sm:mb-6 line-clamp-3 sm:line-clamp-none ${highlighted ? "text-foreground/60" : "text-foreground/50"}`}
+                    >
+                      {service.description}
+                    </p>
+
+                    <ul className="hidden sm:block space-y-2.5 mb-6">
+                      {(cardFeatures[service.slug] ?? service.features).map((feature) => (
+                        <li
+                          key={feature}
+                          className={`flex items-center gap-x-3 text-sm ${highlighted ? "text-foreground/80" : "text-foreground/70"}`}
+                        >
+                          <Check
+                            className={`w-4 h-4 flex-shrink-0 ${highlighted ? "text-primary" : "text-foreground/40"}`}
+                          />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
                   <Link
                     to={`/servicos/${service.slug}`}
-                    className={`mt-auto inline-flex items-center justify-center gap-1.5 w-full rounded-xl py-3 text-sm font-medium transition-all duration-300 group/btn ${
-                      isHighlighted
-                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:shadow-lg hover:brightness-110"
-                        : "border border-border/60 hover:bg-primary hover:text-primary-foreground hover:border-primary"
+                    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    className={`group/btn inline-flex items-center justify-center w-full h-9 px-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                      highlighted
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_hsl(var(--primary)/0.3)]"
+                        : "bg-foreground/10 text-foreground hover:bg-foreground/20 ring-1 ring-foreground/20"
                     }`}
                   >
-                    Quero saber mais
-                    <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
+                    <span className="sm:hidden">Ver mais</span>
+                    <span className="hidden sm:inline">Saiba mais</span>
+                    <ArrowRight className="ml-1.5 sm:ml-2 w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/btn:translate-x-1 transition-transform duration-300" />
                   </Link>
                 </div>
-              </motion.div>
-            </ParallaxCard>
-          );
-        })}
-      </motion.div>
-    </div>
-  </section>
-);
+              );
+            })}
+          </div>
+
+          <p className="text-center text-muted-foreground/60 text-sm mt-12">
+            Passe o mouse sobre os cards para destacar • Clique para saber mais
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+};

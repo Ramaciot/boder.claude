@@ -1,262 +1,187 @@
-import { useCallback, useRef, useState } from "react";
-import { motion } from "framer-motion";
-import { Play, Quote, Sparkles, Star } from "lucide-react";
-import useEmblaCarousel from "embla-carousel-react";
-import Autoplay from "embla-carousel-autoplay";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { staggerContainer, staggerItem } from "@/lib/animations";
-import { testimonials } from "@/content/site";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { Play } from "lucide-react";
 import videoThumbnail from "@/assets/video-thumbnail.jpeg";
 
-type Testimonial = (typeof testimonials.items)[number];
+const quotes = [
+  {
+    quote:
+      "Trabalhei com a Boder Space na gestão de tráfego e social media. Em 3 meses aumentamos as vendas em 250% e o engajamento nas redes sociais explodiu! Equipe muito profissional.",
+    name: "Ana Carolina Lima",
+    title: "E-commerce de Moda",
+  },
+  {
+    quote:
+      "A criação do site e identidade visual da nossa clínica superou todas as expectativas. Design moderno, sofisticado e funcional. Recomendo!",
+    name: "Rafael Costa",
+    title: "Clínica Médica",
+  },
+  {
+    quote:
+      "A estratégia digital completa que a Boder desenvolveu nos ajudou a conquistar investidores. O trabalho de branding e presença online foi impecável!",
+    name: "Mariana Ferreira",
+    title: "Startup Tech",
+  },
+  {
+    quote:
+      "ROI excepcional! A gestão de tráfego pago trouxe leads altamente qualificados. Melhor investimento que fiz para o meu negócio.",
+    name: "Pedro Henrique",
+    title: "Consultoria Empresarial",
+  },
+  {
+    quote:
+      "O social media estratégico transformou nossa presença online. Posts que engajam e convertem! Nossa base de clientes cresceu 180% em 4 meses.",
+    name: "Juliana Santos",
+    title: "Academia Fitness",
+  },
+  {
+    quote:
+      "Landing page de alta conversão e campanhas certeiras. A Boder entende do negócio e entrega resultados reais. Equipe nota 10!",
+    name: "Lucas Oliveira",
+    title: "Restaurante Gourmet",
+  },
+];
 
-const TestimonialCard = ({ testimonial, index }: { testimonial: Testimonial; index: number }) => (
-  <motion.div
-    className="h-full"
-    initial={{ opacity: 0, y: 30, scale: 0.95 }}
-    whileInView={{ opacity: 1, y: 0, scale: 1 }}
-    transition={{ duration: 0.5, delay: index * 0.08 }}
-    viewport={{ once: true }}
-  >
-    <div className="group relative h-full rounded-3xl bg-gradient-to-br from-card/90 via-card/70 to-card/50 backdrop-blur-xl border border-border/40 overflow-hidden transition-all duration-500 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/10">
-      {/* Overlay em gradiente no hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+/** Moldura 3D que "deita" e se endireita com a rolagem (ContainerScroll). */
+const ContainerScroll = ({ children }: { children: ReactNode }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref });
+  const [isMobile, setIsMobile] = useState(false);
 
-      {/* Efeito shine */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none overflow-hidden">
-        <div className="absolute -inset-full top-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 group-hover:animate-shine" />
-      </div>
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
-      <div className="relative z-10 p-5 sm:p-8 h-full flex flex-col">
-        <div className="flex items-start justify-between mb-4 sm:mb-6">
-          <motion.div
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 flex items-center justify-center text-2xl sm:text-3xl border border-primary/10 shadow-lg"
-            whileHover={{ scale: 1.05, rotate: 5 }}
-            transition={{ duration: 0.3 }}
-          >
-            {testimonial.avatar}
-          </motion.div>
+  const rotate = useTransform(scrollYProgress, [0, 1], [15, 0]);
+  const scale = useTransform(scrollYProgress, [0, 1], isMobile ? [0.85, 0.95] : [1.02, 1]);
 
-          <div className="text-right">
-            <div className="text-xl sm:text-2xl font-bold text-gradient">
-              {testimonial.highlight}
-            </div>
-            <div className="text-xs sm:text-sm text-muted-foreground">
-              {testimonial.highlightLabel}
-            </div>
+  return (
+    <div ref={ref} className="h-[32rem] sm:h-[36rem] md:h-[42rem] flex items-center justify-center relative p-2 md:p-8">
+      <div className="py-4 md:py-8 w-full relative" style={{ perspective: "1000px" }}>
+        <motion.div
+          style={{
+            rotateX: rotate,
+            scale,
+            boxShadow:
+              "0 0 #0000004d, 0 9px 20px #0000004a, 0 37px 37px #00000042, 0 84px 50px #00000026, 0 149px 60px #0000000a, 0 233px 65px #00000003",
+          }}
+          className="max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto -mt-4 md:-mt-6 h-[24rem] sm:h-[28rem] md:h-[32rem] lg:h-[36rem] w-full border-4 border-border/30 p-1 sm:p-1.5 md:p-2 bg-background/80 backdrop-blur-xl rounded-[16px] sm:rounded-[20px] md:rounded-[24px] shadow-2xl"
+        >
+          <div className="h-full w-full overflow-hidden rounded-xl sm:rounded-2xl bg-black flex items-center justify-center">
+            {children}
           </div>
-        </div>
-
-        <Quote className="w-6 h-6 sm:w-8 sm:h-8 text-primary/30 mb-3 sm:mb-4" aria-hidden />
-
-        <p className="text-sm sm:text-base text-foreground/90 leading-relaxed flex-1">
-          {testimonial.content}
-        </p>
-
-        <div className="flex gap-1 my-4 sm:my-5" aria-label="5 de 5 estrelas">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <motion.span
-              key={i}
-              initial={{ opacity: 0, scale: 0 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.2, delay: 0.3 + i * 0.05 }}
-              viewport={{ once: true }}
-            >
-              <Star className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 fill-amber-400" />
-            </motion.span>
-          ))}
-        </div>
-
-        <div className="pt-4 sm:pt-5 border-t border-border/30">
-          <p className="font-semibold text-foreground text-base sm:text-lg tracking-tight">
-            {testimonial.name}
-          </p>
-          <p className="text-sm sm:text-base text-primary/80">{testimonial.company}</p>
-        </div>
+        </motion.div>
       </div>
     </div>
-  </motion.div>
-);
+  );
+};
 
 const VideoTestimonial = () => {
-  const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
 
-  const handlePlay = () => {
+  const play = () => {
     videoRef.current?.play();
-    setIsPlaying(true);
+    setPlaying(true);
   };
 
   return (
-    <motion.div
-      className="max-w-2xl mx-auto mb-14 sm:mb-20"
-      initial={{ opacity: 0, y: 40, scale: 0.95 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      viewport={{ once: true }}
-    >
-      <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-primary/10 border border-border/40 bg-gradient-to-br from-card/90 to-card/50 backdrop-blur-xl group">
-        {/* Glow atrás do vídeo */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-
-        <div className="relative">
-          <video
-            ref={videoRef}
-            className="w-full aspect-[9/16] object-cover"
-            poster={videoThumbnail}
-            controls={isPlaying}
-            onPause={() => setIsPlaying(false)}
-            onEnded={() => setIsPlaying(false)}
-            playsInline
-            preload="none"
-          >
-            <source src={testimonials.video.src} type="video/mp4" />
-            Seu navegador não suporta vídeos.
-          </video>
-          {!isPlaying && (
-            <motion.button
-              onClick={handlePlay}
-              className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/50 via-transparent to-transparent cursor-pointer"
-              whileHover={{ backgroundColor: "rgba(0,0,0,0.3)" }}
-              aria-label={testimonials.video.playLabel}
-            >
-              <motion.div
-                className="relative"
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-              >
-                {/* Anel pulsante */}
-                <motion.div
-                  className="absolute inset-0 rounded-full bg-primary/30"
-                  animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-                <motion.div
-                  className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-2xl shadow-primary/40"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Play className="w-8 h-8 sm:w-10 sm:h-10 text-white ml-1" fill="currentColor" />
-                </motion.div>
-              </motion.div>
-
-              <span className="absolute bottom-6 left-6 right-6 text-left">
-                <span className="block text-white/90 text-sm sm:text-base font-medium">
-                  {testimonials.video.playLabel}
-                </span>
-                <span className="block text-white/60 text-xs sm:text-sm">
-                  {testimonials.video.playSubtitle}
-                </span>
-              </span>
-            </motion.button>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-export const Testimonials = () => {
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    { align: "start", loop: true, dragFree: true, containScroll: "trimSnaps" },
-    [Autoplay({ delay: 4500, stopOnInteraction: false, stopOnMouseEnter: true })],
-  );
-
-  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
-
-  return (
-    <section id="depoimentos" className="py-20 sm:py-32 relative overflow-hidden">
-      <div className="container relative z-10">
-        {/* Cabeçalho */}
-        <motion.div
-          className="text-center mb-14 sm:mb-20"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={staggerContainer}
+    <ContainerScroll>
+      <div className="relative w-full h-full flex items-center justify-center bg-black">
+        <video
+          ref={videoRef}
+          className="w-full h-full object-contain"
+          poster={videoThumbnail}
+          controls={playing}
+          onPause={() => setPlaying(false)}
+          onEnded={() => setPlaying(false)}
+          playsInline
+          preload="none"
         >
-          <motion.div variants={staggerItem}>
-            <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-primary/15 via-primary/10 to-primary/5 backdrop-blur-xl border border-primary/20 text-primary text-sm font-medium mb-6 tracking-tight shadow-sm">
-              <Sparkles className="w-4 h-4" />
-              Depoimentos
-            </span>
-          </motion.div>
-          <motion.h2
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-5 tracking-tight"
-            variants={staggerItem}
+          <source src="/videos/testimonial-video.mov" type="video/mp4" />
+          Seu navegador não suporta vídeos.
+        </video>
+        {!playing && (
+          <button
+            type="button"
+            onClick={play}
+            aria-label="Assistir o depoimento"
+            className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/70 via-black/30 to-transparent cursor-pointer hover:bg-black/40 transition-colors z-10"
           >
-            {testimonials.title} <span className="text-gradient">{testimonials.titleHighlight}</span>{" "}
-            {testimonials.titleEnd}
-          </motion.h2>
-          <motion.p
-            className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
-            variants={staggerItem}
-          >
-            {testimonials.subtitle}
-          </motion.p>
-        </motion.div>
-
-        {/* Depoimento em vídeo */}
-        <VideoTestimonial />
-
-        {/* Carrossel de depoimentos */}
-        <motion.div
-          className="max-w-7xl mx-auto relative"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          viewport={{ once: true }}
-        >
-          <div className="overflow-hidden touch-pan-x" ref={emblaRef}>
-            <div className="flex -ml-4 sm:-ml-6">
-              {testimonials.items.map((testimonial, index) => (
-                <div
-                  key={testimonial.name}
-                  className="pl-4 sm:pl-6 flex-none basis-[85%] sm:basis-1/2 lg:basis-1/3 min-w-0"
-                >
-                  <TestimonialCard testimonial={testimonial} index={index} />
-                </div>
-              ))}
+            <div className="relative">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-primary to-violet-500 flex items-center justify-center shadow-2xl shadow-primary/40 hover:scale-110 transition-transform">
+                <Play className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-white ml-0.5" fill="currentColor" />
+              </div>
             </div>
-          </div>
-
-          {/* Navegação */}
-          <button
-            onClick={scrollPrev}
-            aria-label="Depoimento anterior"
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-12 h-12 hidden sm:flex items-center justify-center rounded-2xl bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-xl border border-border/40 shadow-lg hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-300"
-          >
-            <ArrowLeft className="w-5 h-5" />
+            <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 text-left">
+              <p className="text-white/90 text-xs sm:text-sm font-medium">Assista o depoimento</p>
+              <p className="text-white/60 text-[10px] sm:text-xs">Descubra como ajudamos nossos clientes</p>
+            </div>
           </button>
-          <button
-            onClick={scrollNext}
-            aria-label="Próximo depoimento"
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-12 h-12 hidden sm:flex items-center justify-center rounded-2xl bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-xl border border-border/40 shadow-lg hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-300"
-          >
-            <ArrowRight className="w-5 h-5" />
-          </button>
-
-          {/* Indicador mobile */}
-          <motion.div
-            className="flex items-center justify-center gap-2 mt-6 sm:hidden"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            viewport={{ once: true }}
-          >
-            <motion.div
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 backdrop-blur-xl border border-primary/20"
-              animate={{ x: [0, 5, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              <span className="text-xs text-muted-foreground">Deslize para ver mais</span>
-              <span className="text-primary">→</span>
-            </motion.div>
-          </motion.div>
-        </motion.div>
+        )}
       </div>
-    </section>
+    </ContainerScroll>
   );
 };
+
+/** Faixa infinita de depoimentos (pausa ao passar o mouse). */
+const InfiniteMarquee = () => (
+  <div
+    className="scroller relative z-20 max-w-7xl overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_5%,white_95%,transparent)]"
+    style={{ "--animation-direction": "reverse", "--animation-duration": "80s" } as CSSProperties}
+  >
+    <ul className="flex min-w-full shrink-0 gap-4 py-4 w-max flex-nowrap select-none animate-infinite-scroll">
+      {[...quotes, ...quotes].map((item, index) => (
+        <li
+          key={item.name + index}
+          aria-hidden={index >= quotes.length}
+          className="w-[300px] max-w-[85vw] relative rounded-2xl border flex-shrink-0 border-border/50 px-5 py-4 sm:w-[360px] sm:px-6 sm:py-5 backdrop-blur-xl"
+          style={{ background: "linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--background)) 100%)" }}
+        >
+          <blockquote className="flex flex-col h-full justify-between gap-3 sm:gap-4">
+            <span className="relative z-20 text-sm leading-[1.7] text-foreground/90 font-normal line-clamp-4 sm:line-clamp-none">
+              "{item.quote}"
+            </span>
+            <div className="relative z-20 flex flex-row items-center gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-base sm:text-lg border border-primary/10">
+                {item.name.charAt(0)}
+              </div>
+              <span className="flex flex-col gap-0.5">
+                <span className="text-sm leading-[1.6] text-foreground font-semibold">{item.name}</span>
+                <span className="text-xs leading-[1.6] text-muted-foreground font-normal">{item.title}</span>
+              </span>
+            </div>
+          </blockquote>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
+/** Depoimentos — vídeo em moldura 3D + faixa infinita, idêntico ao oficial. */
+export const Testimonials = () => (
+  <section id="depoimentos" className="relative overflow-hidden py-16 sm:py-24">
+    <div className="container mx-auto px-4">
+      <div className="text-center mb-8 sm:mb-12">
+        <span className="inline-block text-primary/80 text-sm font-medium tracking-[0.2em] uppercase mb-6">
+          Depoimentos
+        </span>
+        <h2 className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight mb-6 text-foreground">
+          O que nossos <span className="text-primary">clientes</span> dizem
+        </h2>
+        <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-2 leading-relaxed">
+          Resultados reais de empresas que confiaram no nosso trabalho
+        </p>
+      </div>
+      <div className="mb-12">
+        <VideoTestimonial />
+      </div>
+      <div className="flex flex-col items-center justify-center">
+        <InfiniteMarquee />
+      </div>
+    </div>
+  </section>
+);

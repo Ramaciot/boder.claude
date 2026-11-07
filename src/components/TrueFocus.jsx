@@ -14,7 +14,8 @@ const TrueFocus = ({
   borderColor = 'green',
   glowColor = 'rgba(0, 255, 0, 0.6)',
   animationDuration = 0.5,
-  pauseBetweenAnimations = 1
+  pauseBetweenAnimations = 1,
+  className = ''
 }) => {
   const words = sentence.split(separator);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -66,7 +67,7 @@ const TrueFocus = ({
   };
 
   return (
-    <div className="focus-container" ref={containerRef}>
+    <div className={`focus-container ${className}`} ref={containerRef}>
       {words.map((word, index) => {
         const isActive = index === currentIndex;
         return (

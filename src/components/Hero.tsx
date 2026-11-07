@@ -1,194 +1,93 @@
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, BarChart3, Clock, GitBranch, Smartphone, Sparkles, TrendingUp } from "lucide-react";
 import BlurText from "./BlurText";
 import TrueFocus from "./TrueFocus";
+import { GlassButton } from "./GlassButton";
 import { hero } from "@/content/site";
 import { useMeetingForm } from "@/contexts/MeetingFormContext";
 
-const chipIcons = [Smartphone, BarChart3, Clock, GitBranch, TrendingUp];
-
-const container = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.12, delayChildren: 0.15 },
-  },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 25 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.7, ease: "easeOut" as const },
-  },
-};
-
+/** Hero — estrutura, textos e animações idênticos ao site oficial. */
 export const Hero = () => {
-  const sectionRef = useRef<HTMLElement>(null);
   const { openMeetingForm } = useMeetingForm();
-
-  // Parallax de scroll — fundo e conteúdo em velocidades diferentes
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end start"],
-  });
-  const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "15%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0.3]);
 
   return (
     <section
-      ref={sectionRef}
       id="home"
-      className="min-h-[100dvh] flex items-center justify-center relative overflow-hidden pt-24 sm:pt-32 pb-16"
+      className="min-h-screen flex items-center justify-center relative overflow-hidden pt-32 sm:pt-40 pb-16 sm:pb-24"
     >
-      <motion.div className="container relative z-10" style={{ y: contentY, opacity }}>
-        <motion.div
-          className="max-w-4xl lg:max-w-5xl mx-auto text-center space-y-7 sm:space-y-9"
-          variants={container}
-          initial="hidden"
-          animate="visible"
-        >
-          <motion.div variants={item}>
-            <motion.span
-              className="inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-gradient-to-r from-primary/10 via-primary/8 to-primary/5 backdrop-blur-xl border border-primary/15 shadow-sm cursor-default"
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-            >
-              <motion.span
-                className="w-2 h-2 bg-primary rounded-full"
-                animate={{ scale: [1, 1.2, 1], opacity: [1, 0.8, 1] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-              />
-              <span className="text-xs sm:text-sm font-medium text-primary tracking-tight">
-                {hero.badge}
-              </span>
-              <Sparkles className="w-3.5 h-3.5 text-primary/60" />
-            </motion.span>
-          </motion.div>
+      {/* Véu de vidro sobre o fundo fluido */}
+      <div className="absolute inset-0 backdrop-blur-[3px] bg-background/10 z-[1] [mask-image:linear-gradient(to_bottom,black_75%,transparent)]" />
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-[1.12]">
+      {/* Gradientes radiais da marca */}
+      <div className="absolute inset-0 pointer-events-none z-[2]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,hsl(var(--primary)/0.1),transparent)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_60%_at_80%_60%,hsl(var(--primary)/0.05),transparent)]" />
+      </div>
+
+      {/* Orbes: teal à esquerda, roxo à direita */}
+      <div className="absolute top-1/4 left-[15%] w-64 h-64 sm:w-96 sm:h-96 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-full blur-3xl z-[3] opacity-40 pointer-events-none" />
+      <div className="absolute bottom-1/4 right-[15%] w-56 h-56 sm:w-80 sm:h-80 bg-gradient-to-br from-violet-500/15 via-purple-500/10 to-transparent rounded-full blur-3xl z-[3] opacity-40 pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] sm:w-[800px] sm:h-[800px] bg-gradient-to-br from-primary/5 via-transparent to-accent/5 rounded-full blur-3xl z-[3] pointer-events-none" />
+
+      <div className="container mx-auto px-6 relative z-10">
+        <div className="max-w-5xl mx-auto text-center space-y-8 sm:space-y-10">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.08] tracking-tight px-2">
             <BlurText
               as="span"
               text={hero.titleTop}
-              delay={120}
+              delay={100}
               animateBy="words"
               direction="top"
-              className="justify-center mb-1 sm:mb-2"
+              className="justify-center mb-2"
             />
-            <span className="relative block hero-focus">
+            <span className="block">
               <TrueFocus
                 sentence={hero.titleHighlight}
                 manualMode={false}
                 blurAmount={5}
-                borderColor="hsl(173 80% 45%)"
-                glowColor="hsla(173, 80%, 45%, 0.6)"
+                borderColor="hsl(var(--primary))"
+                glowColor="hsl(var(--primary) / 0.6)"
                 animationDuration={0.5}
-                pauseBetweenAnimations={1}
+                pauseBetweenAnimations={1.5}
+                className="justify-center py-2 text-primary"
               />
             </span>
             <BlurText
               as="span"
               text={hero.titleBottom}
-              delay={120}
-              startDelay={0.9}
+              delay={80}
               animateBy="words"
-              direction="top"
-              className="justify-center mt-1 sm:mt-2"
+              direction="bottom"
+              className="justify-center mt-2"
             />
           </h1>
 
-          <motion.p
-            variants={item}
-            className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-2xl lg:max-w-3xl mx-auto leading-relaxed"
-          >
-            {hero.subtitle}
-          </motion.p>
+          <div className="max-w-3xl mx-auto px-4">
+            <p className="text-base sm:text-xl md:text-2xl text-muted-foreground leading-relaxed font-normal">
+              {hero.subtitle}
+            </p>
+          </div>
 
-          <motion.div
-            variants={item}
-            className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center pt-2"
-          >
-            <motion.div
-              whileHover={{ scale: 1.02, y: -1 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-              className="w-full sm:w-auto"
-            >
-              <button
-                onClick={openMeetingForm}
-                className="glass-container relative inline-flex items-center justify-center gap-2 w-full sm:w-auto text-base px-8 py-4 rounded-full text-foreground font-semibold !border-primary/40 shadow-lg shadow-primary/10 hover:shadow-xl hover:shadow-primary/25 hover:!border-primary/70 transition-all duration-400 group overflow-hidden"
-              >
-                {/* Shine ao passar o mouse */}
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/8 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
-                <span className="relative flex items-center gap-2">
-                  {hero.ctaPrimary}
-                  <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-0.5 transition-transform duration-400" />
-                </span>
-              </button>
-            </motion.div>
-            <motion.div
-              whileHover={{ scale: 1.02, y: -1 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-              className="w-full sm:w-auto"
-            >
-              <a
-                href="#servicos"
-                className="glass-container inline-flex items-center justify-center w-full sm:w-auto text-base px-8 py-4 rounded-full text-foreground font-medium hover:!border-primary/40 hover:shadow-lg hover:shadow-primary/10 transition-all duration-400"
-              >
-                {hero.ctaSecondary}
-              </a>
-            </motion.div>
-          </motion.div>
+          <div className="flex flex-col gap-4 justify-center items-center pt-4 sm:pt-6 px-4">
+            <GlassButton onClick={openMeetingForm} className="min-w-[280px] h-14 px-8 text-base">
+              {hero.ctaPrimary}
+            </GlassButton>
+            <GlassButton href="#servicos" className="min-w-[280px] h-14 px-8 text-base">
+              {hero.ctaSecondary}
+            </GlassButton>
+          </div>
 
-          <motion.div variants={item} className="pt-8 sm:pt-12">
-            <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-              {hero.chips.map((chip, index) => {
-                const Icon = chipIcons[index % chipIcons.length];
-                return (
-                  <motion.span
-                    key={chip}
-                    className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-full bg-secondary/60 backdrop-blur-xl border border-border/40"
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 1.1 + index * 0.1, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-                    whileHover={{ scale: 1.03, y: -1 }}
-                  >
-                    <Icon className="w-4 h-4 text-primary" />
-                    <span className="text-xs sm:text-sm font-medium text-foreground/85">{chip}</span>
-                  </motion.span>
-                );
-              })}
-            </div>
-          </motion.div>
-
-          {/* Indicador de scroll */}
-          <motion.div
-            className="pt-6 sm:pt-10 hidden sm:block"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.6 }}
-          >
-            <motion.a
+          <div className="pt-8 sm:pt-12">
+            <a
               href="#servicos"
-              className="inline-flex flex-col items-center gap-1.5 text-muted-foreground/60 hover:text-muted-foreground transition-colors duration-400 cursor-pointer"
-              animate={{ y: [0, 6, 0] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+              className="inline-flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
-              <span className="text-[10px] font-medium tracking-wider uppercase">Explorar</span>
-              <span className="w-5 h-8 rounded-full border border-current/30 flex items-start justify-center p-1">
-                <motion.span
-                  className="w-1 h-2 bg-current rounded-full"
-                  animate={{ y: [0, 10, 0], opacity: [0.8, 0.3, 0.8] }}
-                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                />
-              </span>
-            </motion.a>
-          </motion.div>
-        </motion.div>
-      </motion.div>
+              <span className="text-xs font-medium tracking-wide uppercase">Explorar</span>
+              <div className="w-6 h-10 rounded-full border-2 border-current/30 flex items-start justify-center p-1.5">
+                <div className="w-1.5 h-3 bg-current rounded-full" />
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
     </section>
   );
 };
