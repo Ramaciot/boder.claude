@@ -10,7 +10,7 @@ import { FAQ } from "@/components/FAQ";
 import { FinalCTA } from "@/components/FinalCTA";
 import { Footer } from "@/components/Footer";
 import ChatBot from "@/components/ChatBot";
-import { LiquidEtherBackground } from "@/components/LiquidEtherBackground";
+import { BrandBackground } from "@/components/BrandBackground";
 
 interface HomeProps {
   /** Id de seção para rolar ao montar (ex.: rota /servicos). */
@@ -36,7 +36,7 @@ const Home = ({ scrollTo }: HomeProps) => {
 
   return (
     <>
-      <LiquidEtherBackground />
+      <BrandBackground />
       <div className="relative z-10 min-h-screen">
         <Header />
         <main>

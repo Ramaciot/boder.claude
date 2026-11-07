@@ -5,7 +5,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import ChatBot from "@/components/ChatBot";
 import { FloatingNav } from "@/components/FloatingNav";
-import { LiquidEtherBackground } from "@/components/LiquidEtherBackground";
+import { BrandBackground } from "@/components/BrandBackground";
 import { FinalCTA } from "@/components/FinalCTA";
 import { Reveal } from "@/components/Reveal";
 import { ButtonLink } from "@/components/Button";
@@ -29,7 +29,7 @@ const ServicePage = () => {
 
   return (
     <div className="min-h-screen">
-      <LiquidEtherBackground />
+      <BrandBackground />
       <div className="relative z-10">
       <Header />
       <FloatingNav />

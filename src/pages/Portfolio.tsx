@@ -19,7 +19,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import ChatBot from "@/components/ChatBot";
 import { FloatingNav } from "@/components/FloatingNav";
-import { LiquidEtherBackground } from "@/components/LiquidEtherBackground";
+import { BrandBackground } from "@/components/BrandBackground";
 import { PortfolioCard } from "@/components/PortfolioCard";
 import { NicheIcon } from "@/components/NicheIcon";
 import { supabase, isPortfolioEnabled, type Niche, type PortfolioSite } from "@/lib/supabase";
@@ -136,7 +136,7 @@ const Portfolio = () => {
 
   return (
     <div className="min-h-screen">
-      <LiquidEtherBackground />
+      <BrandBackground />
       <div className="relative z-10">
         <Header />
         <FloatingNav />
