@@ -62,20 +62,27 @@ const MeetingFormGate = () => {
   );
 };
 
-const App = () => (
-  <MeetingFormProvider>
-    <ScrollToTop />
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/servicos" element={<Home scrollTo="servicos" />} />
-      <Route path="/servicos/:slug" element={<Lazy><ServicePage /></Lazy>} />
-      <Route path="/portfolio" element={<Lazy><Portfolio /></Lazy>} />
-      <Route path="/auth" element={<Lazy><Auth /></Lazy>} />
-      <Route path="/admin" element={<Lazy><Admin /></Lazy>} />
-      <Route path="*" element={<Lazy><NotFound /></Lazy>} />
-    </Routes>
-    <MeetingFormGate />
-  </MeetingFormProvider>
-);
+const App = () => {
+  // Protótipo GL da abertura: ?gl=1 monta o GlOpening no lugar do CineOpening.
+  // Sem a flag, tudo como está.
+  const { search } = useLocation();
+  const abertura = new URLSearchParams(search).get("gl") === "1" ? "gl" : "cine";
+
+  return (
+    <MeetingFormProvider>
+      <ScrollToTop />
+      <Routes>
+        <Route path="/" element={<Home abertura={abertura} />} />
+        <Route path="/servicos" element={<Home scrollTo="servicos" abertura={abertura} />} />
+        <Route path="/servicos/:slug" element={<Lazy><ServicePage /></Lazy>} />
+        <Route path="/portfolio" element={<Lazy><Portfolio /></Lazy>} />
+        <Route path="/auth" element={<Lazy><Auth /></Lazy>} />
+        <Route path="/admin" element={<Lazy><Admin /></Lazy>} />
+        <Route path="*" element={<Lazy><NotFound /></Lazy>} />
+      </Routes>
+      <MeetingFormGate />
+    </MeetingFormProvider>
+  );
+};
 
 export default App;
