@@ -10,13 +10,13 @@ import "./cine.css";
  * header da abertura, o título que sai da tela e os painéis de vidro que
  * entram em sincronia com os quadros (faixas data-de/data-ate do pacote).
  *
- * Desempenho: nada roda em loop — o canvas só é redesenhado quando a rolagem
- * muda o quadro; só o conjunto de quadros do tamanho da tela é baixado, e os
- * quadros depois do primeiro carregam em segundo plano.
+ * A lógica segue o app.js do pacote (carga em passadas, suavização 0.18,
+ * título saindo em 16% do progresso). Única diferença: o loop de animação
+ * pausa quando o quadro alcança a rolagem, em vez de rodar sem parar.
  */
 
 const TOTAL_FRAMES = 160;
-const MOBILE_QUERY = "(max-width: 860px)";
+const MOBILE_QUERY = "(max-width: 760px)"; // mesmo corte do app.js do pacote
 const frameUrl = (set: "desktop" | "mobile", n: number) =>
   `/cine/assets/frames/${set}/f_${String(n).padStart(4, "0")}.webp`;
 
@@ -55,127 +55,121 @@ export const CineOpening = () => {
     const ctx = canvas?.getContext("2d");
     if (!section || !canvas || !ctx) return;
 
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const mobileMql = window.matchMedia(MOBILE_QUERY);
-    let set: "desktop" | "mobile" = mobileMql.matches ? "mobile" : "desktop";
-    let frames: HTMLImageElement[] = [];
-    let loaded: boolean[] = [];
-    let drawn = -1;
+    // ── Mesma lógica do app.js do pacote ──────────────────────────────────
+    const reduzir = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const celularMql = window.matchMedia(MOBILE_QUERY);
+    const total = TOTAL_FRAMES;
+    let set: "desktop" | "mobile" = celularMql.matches ? "mobile" : "desktop";
+    let quadros: (HTMLImageElement | undefined)[] = [];
+    let alvo = 0;
+    let atual = 0;
+    let desenhado = -1;
     let raf = 0;
+    let loteTimer = 0;
     let disposed = false;
-    let loadToken = 0;
 
-    // ── Desenho ─────────────────────────────────────────────────────────
-    const fitCanvas = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.round(canvas.clientWidth * dpr);
-      canvas.height = Math.round(canvas.clientHeight * dpr);
-      drawn = -1;
+    const pronto = (i: number) => {
+      const img = quadros[i];
+      return !!img && img.complete && img.naturalWidth > 0;
     };
-
-    const draw = (img: HTMLImageElement) => {
-      const cw = canvas.width;
-      const ch = canvas.height;
-      const s = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
-      const w = img.naturalWidth * s;
-      const h = img.naturalHeight * s;
-      ctx.fillStyle = "#050807";
-      ctx.fillRect(0, 0, cw, ch);
-      ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
-    };
-
-    /** Quadro carregado mais próximo do desejado (prefere os anteriores). */
-    const nearestLoaded = (idx: number) => {
-      for (let d = 0; d < TOTAL_FRAMES; d++) {
-        if (idx - d >= 0 && loaded[idx - d]) return idx - d;
-        if (idx + d < TOTAL_FRAMES && loaded[idx + d]) return idx + d;
+    const maisProximo = (i: number) => {
+      for (let d = 0; d < total; d++) {
+        if (pronto(i - d)) return i - d;
+        if (pronto(i + d)) return i + d;
       }
       return -1;
     };
 
-    const progress = () => {
-      const rect = section.getBoundingClientRect();
-      const total = section.offsetHeight - window.innerHeight;
-      return total > 0 ? Math.min(1, Math.max(0, -rect.top / total)) : 0;
+    function desenhar(i: number, forcar = false) {
+      const j = maisProximo(i);
+      if (j < 0 || (j === desenhado && !forcar)) return;
+      const img = quadros[j]!;
+      const cw = canvas!.width;
+      const ch = canvas!.height;
+      const escala = Math.max(cw / img.naturalWidth, ch / img.naturalHeight); // "cover"
+      const w = img.naturalWidth * escala;
+      const h = img.naturalHeight * escala;
+      ctx!.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
+      desenhado = j;
+    }
+
+    const carregar = (i: number) => {
+      if (quadros[i]) return;
+      const img = new Image();
+      img.decoding = "async";
+      img.src = frameUrl(set, i + 1);
+      img.onload = () => {
+        if (disposed || quadros[i] !== img) return;
+        if (Math.round(atual) === i || desenhado === -1) desenhar(i, true);
+      };
+      quadros[i] = img;
     };
 
-    const update = () => {
-      raf = 0;
-      const p = reduceMotion ? 0 : progress();
+    // Carrega em passadas (1 a cada 8, depois 1 a cada 4…) para cobrir o filme inteiro cedo.
+    const carregarTudo = () => {
+      window.clearTimeout(loteTimer);
+      quadros = new Array(total);
+      desenhado = -1;
+      carregar(0);
+      if (reduzir) return;
+      const fila: number[] = [];
+      for (const passo of [8, 4, 2, 1]) for (let i = 0; i < total; i += passo) if (!fila.includes(i)) fila.push(i);
+      let k = 0;
+      const lote = () => {
+        for (let n = 0; n < 6 && k < fila.length; n++) carregar(fila[k++]);
+        if (k < fila.length && !disposed) loteTimer = window.setTimeout(lote, 40);
+      };
+      lote();
+    };
 
-      const target = Math.min(TOTAL_FRAMES - 1, Math.floor(p * TOTAL_FRAMES));
-      const idx = nearestLoaded(target);
-      if (idx >= 0 && idx !== drawn) {
-        drawn = idx;
-        draw(frames[idx]);
-      }
+    const progresso = () => {
+      const r = section.getBoundingClientRect();
+      const curso = section.offsetHeight - window.innerHeight;
+      return Math.min(1, Math.max(0, -r.top / (curso || 1)));
+    };
 
-      // Título gigante sai da tela (sobe e esmaece) no primeiro trecho.
-      const title = titleRef.current;
-      if (title) {
-        const t = Math.min(1, p / 0.26);
-        title.style.transform = `translate3d(0, ${-t * 38}vh, 0)`;
-        title.style.opacity = String(1 - t);
-      }
-
+    const atualizarMomentos = (p: number) => {
       MOMENTS.forEach((m, i) => {
-        momentRefs.current[i]?.classList.toggle("ativo", p >= m.from && p <= m.to);
+        momentRefs.current[i]?.classList.toggle("ativo", p >= m.from && (p < m.to || (m.to >= 1 && p >= 1)));
       });
       section.classList.toggle("andou", p > 0.02);
+      const sair = titleRef.current;
+      if (sair) {
+        const q = Math.min(1, p / 0.16);
+        sair.style.transform = `translateY(${(-46 * q).toFixed(1)}vh)`;
+        sair.style.opacity = String(1 - q * q);
+      }
     };
 
-    const schedule = () => {
-      if (!raf) raf = requestAnimationFrame(update);
+    // Igual ao loop do pacote (suavização 0.18), mas pausa quando o quadro
+    // alcança a rolagem e volta no próximo scroll — nada roda com a página parada.
+    const quadro = () => {
+      raf = 0;
+      alvo = progresso() * (total - 1);
+      atual += (alvo - atual) * 0.18; // suaviza: sensação de filme, não de slide
+      if (Math.abs(alvo - atual) < 0.05) atual = alvo;
+      desenhar(Math.round(atual));
+      atualizarMomentos(atual / (total - 1));
+      if (atual !== alvo) raf = requestAnimationFrame(quadro);
+    };
+    const acordar = () => {
+      if (!reduzir && !raf) raf = requestAnimationFrame(quadro);
     };
 
-    // ── Carregamento dos quadros ───────────────────────────────────────
-    const loadFrames = () => {
-      const token = ++loadToken;
-      frames = Array.from({ length: TOTAL_FRAMES }, () => new Image());
-      loaded = new Array(TOTAL_FRAMES).fill(false);
-      drawn = -1;
-
-      const load = (i: number) =>
-        new Promise<void>((resolve) => {
-          const img = frames[i];
-          img.decoding = "async";
-          img.onload = () => {
-            if (token !== loadToken || disposed) return resolve();
-            loaded[i] = true;
-            schedule();
-            resolve();
-          };
-          img.onerror = () => resolve();
-          img.src = frameUrl(set, i + 1);
-        });
-
-      // Primeiro quadro já; o resto em segundo plano, em ordem, 6 por vez.
-      load(0).then(() => {
-        if (reduceMotion || token !== loadToken) return;
-        const start = () => {
-          let next = 1;
-          const worker = async (): Promise<void> => {
-            while (next < TOTAL_FRAMES && token === loadToken && !disposed) {
-              await load(next++);
-            }
-          };
-          for (let k = 0; k < 6; k++) void worker();
-        };
-        if (document.readyState === "complete") start();
-        else window.addEventListener("load", start, { once: true });
-      });
+    const ajustar = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(canvas.clientWidth * dpr);
+      canvas.height = Math.round(canvas.clientHeight * dpr);
+      desenhado = -1;
+      desenhar(Math.round(atual), true);
     };
 
-    // ── Ligações ───────────────────────────────────────────────────────
-    const onResize = () => {
-      fitCanvas();
-      schedule();
-    };
-    const onBreakpoint = () => {
-      const nextSet = mobileMql.matches ? "mobile" : "desktop";
-      if (nextSet !== set) {
-        set = nextSet;
-        loadFrames();
+    const aoMudarTela = () => {
+      const novo = celularMql.matches ? "mobile" : "desktop";
+      if (novo !== set) {
+        set = novo;
+        carregarTudo();
+        acordar();
       }
     };
 
@@ -183,31 +177,34 @@ export const CineOpening = () => {
     // (a abertura tem o próprio header com a logo e a navegação).
     const io = new IntersectionObserver(
       ([entry]) => {
-        const visible = entry.isIntersecting;
-        document.documentElement.toggleAttribute("data-cine-ativa", visible);
-        section.classList.toggle("em-cena", visible);
-        if (visible) schedule();
+        const visivel = entry.isIntersecting;
+        document.documentElement.toggleAttribute("data-cine-ativa", visivel);
+        section.classList.toggle("em-cena", visivel);
       },
       { rootMargin: "0px 0px -100% 0px" },
     );
 
-    fitCanvas();
-    loadFrames();
-    update();
+    carregarTudo();
+    ajustar();
+    if (reduzir) atualizarMomentos(0);
+    else {
+      atual = alvo = progresso() * (total - 1);
+      acordar();
+    }
     io.observe(section);
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", onResize);
-    mobileMql.addEventListener("change", onBreakpoint);
+    window.addEventListener("scroll", acordar, { passive: true });
+    window.addEventListener("resize", ajustar);
+    celularMql.addEventListener("change", aoMudarTela);
 
     return () => {
       disposed = true;
-      loadToken++;
+      window.clearTimeout(loteTimer);
       if (raf) cancelAnimationFrame(raf);
       io.disconnect();
       document.documentElement.removeAttribute("data-cine-ativa");
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", onResize);
-      mobileMql.removeEventListener("change", onBreakpoint);
+      window.removeEventListener("scroll", acordar);
+      window.removeEventListener("resize", ajustar);
+      celularMql.removeEventListener("change", aoMudarTela);
     };
   }, []);
 
