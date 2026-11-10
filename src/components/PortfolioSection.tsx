@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import { useCallback, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { animate } from "framer-motion";
 
@@ -106,16 +106,20 @@ export const PortfolioSection = () => {
       />
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center">
-          <span className="inline-block text-primary/80 text-sm font-medium tracking-[0.2em] uppercase mb-6">
+          <span data-reveal className="inline-block text-primary/80 text-sm font-medium tracking-[0.2em] uppercase mb-6">
             Portfólio
           </span>
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight mb-6 text-foreground">
+          <h2 data-reveal="title" className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight mb-6 text-foreground">
             Sites que <span className="text-primary">Vendem</span>
           </h2>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-12 font-light">
+          <p
+            data-reveal
+            style={{ "--reveal-delay": "160ms" } as CSSProperties}
+            className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-12 font-light"
+          >
             Soluções completas para transformar seu negócio digital
           </p>
-          <div className="flex justify-center">
+          <div data-reveal style={{ "--reveal-delay": "280ms" } as CSSProperties} className="flex justify-center">
             <div ref={buttonRef} className="will-change-transform relative" style={{ transformOrigin: "center center" }}>
               <SpaceButton onClick={handleClick}>VEJA NOSSOS SITES</SpaceButton>
             </div>

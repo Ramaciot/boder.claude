@@ -18,9 +18,11 @@
   --gutter: clamp(16px, 4vw, 56px);
   --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
 
+  --saida: 0; /* 0 = cena cheia, 1 = dissolvida no fundo do site */
   position: relative;
   height: var(--altura, 460vh);
-  background: var(--fundo);
+  /* Fundo da cena some junto no dissolve final, revelando o fundo do site */
+  background: rgb(5 8 7 / calc(1 - var(--saida)));
   color: var(--texto);
   font: 400 clamp(16px, 1.05vw, 18px) / 1.65 var(--fonte-texto);
   -webkit-font-smoothing: antialiased;
@@ -50,6 +52,12 @@
   height: 100vh;
   height: 100svh;
   overflow: hidden;
+}
+/* Camada da cena (canvas, vídeo, poeira, vinheta) — dissolve no fim */
+.cine-cena {
+  position: absolute;
+  inset: 0;
+  opacity: calc(1 - var(--saida));
 }
 .cine-canvas {
   position: absolute;
@@ -139,7 +147,7 @@
   inset: -50%;
   z-index: 5;
   pointer-events: none;
-  opacity: 0.07;
+  opacity: calc(0.07 * (1 - var(--saida)));
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 .cine-abertura.em-cena .cine-palco::after {
@@ -153,6 +161,7 @@
 
 /* ── Header da abertura ───────────────────────────────────────────────── */
 .cine-topo {
+  opacity: calc(1 - var(--saida));
   position: absolute;
   inset: 0 0 auto;
   z-index: 10;

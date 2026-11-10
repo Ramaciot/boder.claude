@@ -13,18 +13,18 @@ export const Hero = () => {
       id="home"
       className="min-h-screen flex items-center justify-center relative overflow-hidden pt-32 sm:pt-40 pb-16 sm:pb-24"
     >
-      {/* Véu de vidro sobre o fundo fluido */}
-      <div className="absolute inset-0 backdrop-blur-[3px] bg-background/10 z-[1] [mask-image:linear-gradient(to_bottom,black_75%,transparent)]" />
+      {/* Véu de vidro — esmaecido no topo e na base para emendar com a abertura */}
+      <div className="absolute inset-0 backdrop-blur-[3px] bg-background/10 z-[1] [mask-image:linear-gradient(to_bottom,transparent,black_22%,black_75%,transparent)]" />
 
       {/* Gradientes radiais da marca */}
-      <div className="absolute inset-0 pointer-events-none z-[2]">
+      <div className="absolute inset-0 pointer-events-none z-[2] [mask-image:linear-gradient(to_bottom,transparent,black_30%)]">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,hsl(var(--primary)/0.1),transparent)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_60%_at_80%_60%,hsl(var(--primary)/0.05),transparent)]" />
       </div>
 
       {/* Orbes: teal à esquerda, roxo à direita */}
-      <div className="absolute top-1/4 left-[15%] w-64 h-64 sm:w-96 sm:h-96 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-full blur-3xl z-[3] opacity-40 pointer-events-none" />
-      <div className="absolute bottom-1/4 right-[15%] w-56 h-56 sm:w-80 sm:h-80 bg-gradient-to-br from-violet-500/15 via-purple-500/10 to-transparent rounded-full blur-3xl z-[3] opacity-40 pointer-events-none" />
+      <div data-parallax="rapido" className="absolute top-1/4 left-[15%] w-64 h-64 sm:w-96 sm:h-96 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-full blur-3xl z-[3] opacity-40 pointer-events-none" />
+      <div data-parallax="lento" className="absolute bottom-1/4 right-[15%] w-56 h-56 sm:w-80 sm:h-80 bg-gradient-to-br from-violet-500/15 via-purple-500/10 to-transparent rounded-full blur-3xl z-[3] opacity-40 pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] sm:w-[800px] sm:h-[800px] bg-gradient-to-br from-primary/5 via-transparent to-accent/5 rounded-full blur-3xl z-[3] pointer-events-none" />
 
       <div className="container mx-auto px-6 relative z-10">

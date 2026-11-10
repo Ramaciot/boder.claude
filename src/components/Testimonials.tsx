@@ -166,20 +166,24 @@ export const Testimonials = () => (
   <section id="depoimentos" className="relative overflow-hidden py-16 sm:py-24">
     <div className="container mx-auto px-4">
       <div className="text-center mb-8 sm:mb-12">
-        <span className="inline-block text-primary/80 text-sm font-medium tracking-[0.2em] uppercase mb-6">
+        <span data-reveal className="inline-block text-primary/80 text-sm font-medium tracking-[0.2em] uppercase mb-6">
           Depoimentos
         </span>
-        <h2 className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight mb-6 text-foreground">
+        <h2 data-reveal="title" className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight mb-6 text-foreground">
           O que nossos <span className="text-primary">clientes</span> dizem
         </h2>
-        <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-2 leading-relaxed">
+        <p
+          data-reveal
+          style={{ "--reveal-delay": "160ms" } as CSSProperties}
+          className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-2 leading-relaxed"
+        >
           Resultados reais de empresas que confiaram no nosso trabalho
         </p>
       </div>
-      <div className="mb-12">
+      <div data-reveal className="mb-12">
         <VideoTestimonial />
       </div>
-      <div className="flex flex-col items-center justify-center">
+      <div data-reveal className="flex flex-col items-center justify-center">
         <InfiniteMarquee />
       </div>
     </div>

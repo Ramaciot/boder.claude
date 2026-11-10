@@ -20,7 +20,12 @@ import "./cine.css";
  *  - Parado no meio da abertura, os quadros "respiram" (oscilam alguns quadros
  *    em torno do ponto atual) em vez de congelar.
  *  - Poeira flutuando em CSS por cima de tudo, o tempo todo.
- *  - O loop de animação roda sem pausa enquanto a abertura existe.
+ *  - O loop de animação roda sem pausa enquanto a abertura está na tela (só
+ *    para quando ela sai totalmente de vista, e volta ao reaparecer).
+ *
+ * Unificação com o site: no trecho final (88%→100%) a cena inteira se dissolve
+ * até ficar transparente, revelando o fundo do próprio site — o conteúdo da
+ * home entra sem corte seco.
  */
 
 const TOTAL_FRAMES = 160;
@@ -32,6 +37,8 @@ const OCIOSO_MS = 220;
 /** Amplitude (em quadros) e período da "respiração" quando parado no meio. */
 const DERIVA_QUADROS = 3;
 const DERIVA_PERIODO_MS = 4200;
+/** A partir deste progresso a cena se dissolve no fundo do site (unificação). */
+const SAIDA_INICIO = 0.88;
 const MOBILE_QUERY = "(max-width: 760px)"; // mesmo corte do app.js do pacote
 const frameUrl = (set: "desktop" | "mobile", n: number) =>
   `/cine/assets/frames/${set}/f_${String(n).padStart(4, "0")}.webp`;
@@ -90,6 +97,7 @@ export const CineOpening = () => {
     let videoOk = false;
     let mostrandoVideo = false;
     let pausaVideoTimer = 0;
+    let saidaAplicada = -1;
     const video = videoRef.current;
 
     const pronto = (i: number) => {
@@ -205,8 +213,13 @@ export const CineOpening = () => {
 
     // ── Loop contínuo (sem pausa): scrub do pacote + respiração + vídeo ───
     const quadro = (agora: number) => {
+      // Contínuo enquanto a abertura está na tela; fora dela, o loop para
+      // (o IntersectionObserver religa quando ela volta).
+      if (!visivel) {
+        raf = 0;
+        return;
+      }
       raf = requestAnimationFrame(quadro);
-      if (!visivel) return;
 
       const rolando = agora - ultimoScroll < OCIOSO_MS;
       alvo = progresso() * (total - 1);
@@ -223,6 +236,14 @@ export const CineOpening = () => {
 
       atualizarMomentos(p);
       definirVideo(videoOk && !rolando && p <= TOPO);
+
+      // Dissolve final: 0 → 1 com ease, aplicado via variável CSS.
+      const t = Math.min(1, Math.max(0, (p - SAIDA_INICIO) / (1 - SAIDA_INICIO)));
+      const saida = Math.round(t * t * (3 - 2 * t) * 1000) / 1000;
+      if (saida !== saidaAplicada) {
+        saidaAplicada = saida;
+        section.style.setProperty("--saida", String(saida));
+      }
     };
     const marcarScroll = () => {
       ultimoScroll = performance.now();
@@ -253,6 +274,7 @@ export const CineOpening = () => {
         section.classList.toggle("em-cena", visivel);
         if (!visivel && video) video.pause();
         else if (visivel && mostrandoVideo) tocarVideo();
+        if (visivel && !raf && !reduzir) raf = requestAnimationFrame(quadro);
       },
       { rootMargin: "0px 0px -100% 0px" },
     );
@@ -291,23 +313,25 @@ export const CineOpening = () => {
   return (
     <section id="inicio" ref={sectionRef} className="cine-abertura" style={{ "--altura": "460vh" } as CSSProperties}>
       <div className="cine-palco">
-        <canvas ref={canvasRef} className="cine-canvas" aria-hidden="true" />
-        <video
-          ref={videoRef}
-          className="cine-video"
-          muted
-          loop
-          playsInline
-          preload="auto"
-          disablePictureInPicture
-          aria-hidden="true"
-        />
-        <div className="cine-poeira" aria-hidden="true">
-          <span />
-          <span />
-          <span />
+        <div className="cine-cena">
+          <canvas ref={canvasRef} className="cine-canvas" aria-hidden="true" />
+          <video
+            ref={videoRef}
+            className="cine-video"
+            muted
+            loop
+            playsInline
+            preload="auto"
+            disablePictureInPicture
+            aria-hidden="true"
+          />
+          <div className="cine-poeira" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+          <div className="cine-vinheta" />
         </div>
-        <div className="cine-vinheta" />
 
         <header className="cine-topo">
           <a href="#inicio" className="cine-marca" aria-label="Boder Space" onClick={goTo("inicio")}>

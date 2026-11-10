@@ -23,9 +23,19 @@ const TrueFocus = ({
   const containerRef = useRef(null);
   const wordRefs = useRef([]);
   const [focusRect, setFocusRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [inView, setInView] = useState(true);
+
+  // Só alterna o foco enquanto o título está na tela (fora dela, nada roda).
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   useEffect(() => {
-    if (!manualMode) {
+    if (!manualMode && inView) {
       const interval = setInterval(
         () => {
           setCurrentIndex(prev => (prev + 1) % words.length);
@@ -35,7 +45,7 @@ const TrueFocus = ({
 
       return () => clearInterval(interval);
     }
-  }, [manualMode, animationDuration, pauseBetweenAnimations, words.length]);
+  }, [manualMode, inView, animationDuration, pauseBetweenAnimations, words.length]);
 
   useEffect(() => {
     if (currentIndex === null || currentIndex === -1) return;

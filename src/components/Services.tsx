@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Bot, Check, Globe, Share2, Star, Target, TrendingUp, type LucideIcon } from "lucide-react";
 import { services } from "@/content/site";
@@ -26,21 +27,28 @@ export const Services = () => {
   return (
     <section id="servicos" className="py-20 sm:py-32 bg-transparent relative overflow-hidden isolate">
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[140px]" />
+        <div data-parallax="rapido" className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]" />
+        <div data-parallax="lento" className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[140px]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.08)_0%,transparent_70%)]" />
       </div>
 
       <div className="container mx-auto px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16 sm:mb-20">
-            <span className="inline-block text-primary/80 text-sm font-medium tracking-[0.2em] uppercase mb-6">
+            <span data-reveal className="inline-block text-primary/80 text-sm font-medium tracking-[0.2em] uppercase mb-6">
               Nossos Serviços
             </span>
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight text-foreground mb-6">
+            <h2
+              data-reveal="title"
+              className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight text-foreground mb-6"
+            >
               Soluções para <span className="text-primary">escalar seu negócio</span>
             </h2>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto font-light">
+            <p
+              data-reveal
+              style={{ "--reveal-delay": "160ms" } as CSSProperties}
+              className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto font-light"
+            >
               Cada serviço é pensado para entregar resultados mensuráveis
             </p>
           </div>
@@ -56,6 +64,8 @@ export const Services = () => {
               return (
                 <div
                   key={service.slug}
+                  data-reveal="card"
+                  style={{ "--reveal-delay": `${(index % 3) * 110}ms` } as CSSProperties}
                   className={[
                     "group relative flex flex-col justify-between rounded-2xl sm:rounded-3xl p-4 sm:p-6 xl:p-8 transition-all duration-300 cursor-pointer backdrop-blur-xl",
                     "hover:bg-foreground/[0.08] hover:border-foreground/30 hover:scale-[1.02] hover:z-10",
@@ -131,7 +141,7 @@ export const Services = () => {
             })}
           </div>
 
-          <p className="text-center text-muted-foreground/60 text-sm mt-12">
+          <p data-reveal className="text-center text-muted-foreground/60 text-sm mt-12">
             Passe o mouse sobre os cards para destacar • Clique para saber mais
           </p>
         </div>

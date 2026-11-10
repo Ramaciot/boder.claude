@@ -55,16 +55,9 @@ export const FAQ = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/30 to-background" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(var(--primary)/0.08),transparent)]" />
       </div>
-      <motion.div
-        className="absolute top-20 right-[10%] w-64 h-64 bg-gradient-to-br from-primary/10 via-violet-500/5 to-transparent rounded-full blur-3xl pointer-events-none"
-        animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute bottom-20 left-[10%] w-56 h-56 bg-gradient-to-br from-accent/10 via-blue-500/5 to-transparent rounded-full blur-3xl pointer-events-none"
-        animate={{ scale: [1, 1.15, 1], opacity: [0.3, 0.5, 0.3] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-      />
+      {/* Orbes "respirando" em CSS (compositor) — sem loop de JS */}
+      <div className="faq-orbe faq-orbe--a absolute top-20 right-[10%] w-64 h-64 bg-gradient-to-br from-primary/10 via-violet-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
+      <div className="faq-orbe faq-orbe--b absolute bottom-20 left-[10%] w-56 h-56 bg-gradient-to-br from-accent/10 via-blue-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
       <div className="container mx-auto px-6 relative z-10">
         <div className="max-w-4xl mx-auto">
