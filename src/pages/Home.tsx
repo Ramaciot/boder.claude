@@ -11,6 +11,7 @@ import { FinalCTA } from "@/components/FinalCTA";
 import { Footer } from "@/components/Footer";
 import ChatBot from "@/components/ChatBot";
 import { BrandBackground } from "@/components/BrandBackground";
+import { CineOpening } from "@/components/cine/CineOpening";
 
 interface HomeProps {
   /** Id de seção para rolar ao montar (ex.: rota /servicos). */
@@ -18,7 +19,8 @@ interface HomeProps {
 }
 
 /**
- * Página inicial — mesma ordem de seções do site oficial:
+ * Página inicial — abertura cinematográfica no topo e, abaixo dela, a mesma
+ * ordem de seções do site oficial:
  * Hero → Serviços → Sites que Vendem → App → Depoimentos → Equipe → FAQ → CTA.
  */
 const Home = ({ scrollTo }: HomeProps) => {
@@ -38,8 +40,11 @@ const Home = ({ scrollTo }: HomeProps) => {
     <>
       <BrandBackground />
       <div className="relative z-10 min-h-screen">
-        <Header />
+        <div className="site-header-slot">
+          <Header />
+        </div>
         <main>
+          <CineOpening />
           <Hero />
           <Services />
           <PortfolioSection />

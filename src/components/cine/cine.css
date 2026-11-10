@@ -1,0 +1,327 @@
+/*
+ * Abertura cinematográfica — estilos do pacote "boder-cine-v2" (estilo.css),
+ * todos escopados em .cine-abertura para que fontes, tokens e o grão de filme
+ * não vazem para o resto da home.
+ */
+
+.cine-abertura {
+  --fundo: #050807;
+  --texto: #eef3f0;
+  --texto-suave: #a7b3ab;
+  --acento: #17c9ad;
+  --acento-texto: #04120c;
+  --linha: rgb(238 243 240 / 0.12);
+  --painel: rgb(7 13 10 / 0.62);
+  --fonte-titulo: "Instrument Serif", Georgia, serif;
+  --fonte-texto: "Manrope", system-ui, sans-serif;
+  --raio: 18px;
+  --gutter: clamp(16px, 4vw, 56px);
+  --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+
+  position: relative;
+  height: var(--altura, 460vh);
+  background: var(--fundo);
+  color: var(--texto);
+  font: 400 clamp(16px, 1.05vw, 18px) / 1.65 var(--fonte-texto);
+  -webkit-font-smoothing: antialiased;
+}
+
+.cine-abertura h1 {
+  font-family: var(--fonte-titulo);
+  font-weight: 300;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  color: var(--texto);
+}
+.cine-abertura p {
+  margin: 0 0 1em;
+  color: var(--texto-suave);
+  text-wrap: pretty;
+}
+.cine-abertura a {
+  color: inherit;
+}
+
+/* ── Palco ─────────────────────────────────────────────────────────────── */
+.cine-palco {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+}
+.cine-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.cine-vinheta {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Funde a base do palco com o fundo do site logo abaixo */
+  background:
+    radial-gradient(120% 90% at 50% 45%, transparent 55%, rgb(0 0 0 / 0.45) 100%),
+    linear-gradient(to bottom, transparent 70%, hsl(var(--background)) 100%);
+}
+/* Grão de filme — só no palco e só enquanto a abertura está na tela */
+.cine-palco::after {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.cine-abertura.em-cena .cine-palco::after {
+  animation: cine-grao 1s steps(4) infinite;
+}
+@keyframes cine-grao {
+  25% { transform: translate(-3%, 2%); }
+  50% { transform: translate(2%, -3%); }
+  75% { transform: translate(-2%, -1%); }
+}
+
+/* ── Header da abertura ───────────────────────────────────────────────── */
+.cine-topo {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px var(--gutter);
+}
+.cine-marca {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cine-marca-logo {
+  height: 40px;
+  width: auto;
+  border-radius: 10px;
+}
+.cine-marca-texto {
+  font-family: var(--fonte-titulo);
+  font-size: 22px;
+  letter-spacing: 0.02em;
+}
+.cine-menu {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+.cine-menu a {
+  text-decoration: none;
+  opacity: 0.8;
+  transition: opacity 0.3s;
+}
+.cine-menu a:hover {
+  opacity: 1;
+}
+.cine-menu-cta {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  border: 1px solid var(--linha);
+  padding: 9px 16px;
+  border-radius: 999px;
+  transition: border-color 0.3s;
+}
+.cine-menu-cta:hover {
+  border-color: var(--acento);
+}
+@media (max-width: 760px) {
+  .cine-menu a {
+    display: none;
+  }
+}
+
+/* ── Título que sai da tela ───────────────────────────────────────────── */
+.cine-titulo-sair {
+  position: absolute;
+  z-index: 6;
+  left: var(--gutter);
+  bottom: 9vh;
+  max-width: min(880px, calc(100vw - 2 * var(--gutter)));
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.cine-titulo-sair h1 {
+  font-size: clamp(44px, 7.6vw, 118px);
+  margin: 0 0 0.25em;
+}
+.cine-apoio {
+  font-size: clamp(17px, 1.6vw, 24px);
+  line-height: 1.45;
+}
+.cine-abertura .cine-apoio {
+  color: var(--texto);
+  margin: 0;
+}
+.cine-apoio em {
+  font-family: var(--fonte-titulo);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ── Painéis de vidro sincronizados com os quadros ────────────────────── */
+.cine-momento {
+  position: absolute;
+  z-index: 6;
+  inset: auto var(--gutter) 12vh;
+  max-width: 640px;
+  opacity: 0;
+  transform: translateY(24px);
+  filter: blur(6px);
+  transition:
+    opacity 0.7s var(--ease),
+    transform 0.9s var(--ease),
+    filter 0.7s var(--ease);
+  pointer-events: none;
+}
+.cine-momento.ativo {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  pointer-events: auto;
+}
+.cine-momento--direita {
+  left: auto;
+  right: var(--gutter);
+}
+.cine-momento--centro {
+  left: 50%;
+  right: auto;
+  transform: translate(-50%, 24px);
+  text-align: center;
+  width: min(640px, calc(100% - 2 * var(--gutter)));
+}
+.cine-momento--centro.ativo {
+  transform: translate(-50%, 0);
+}
+.cine-painel {
+  position: relative;
+  background: var(--painel);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  padding: clamp(24px, 3.2vw, 48px);
+  backdrop-filter: blur(18px) saturate(1.1);
+  -webkit-backdrop-filter: blur(18px) saturate(1.1);
+}
+.cine-painel--vidro {
+  background: rgb(5 8 7 / 0.38);
+}
+.cine-abertura .cine-destaque {
+  font-family: var(--fonte-titulo);
+  font-size: clamp(24px, 2.8vw, 42px);
+  line-height: 1.2;
+  color: var(--texto);
+  margin: 0 0 0.6em;
+}
+.cine-abertura .cine-destaque:last-child {
+  margin: 0;
+}
+.cine-botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font: 600 15px/1 var(--fonte-texto);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  color: var(--acento-texto);
+  background: var(--acento);
+  border: 0;
+  border-radius: 999px;
+  padding: 17px 30px;
+  transition:
+    transform 0.4s var(--ease),
+    filter 0.3s;
+}
+.cine-botao:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+/* ── Dica "role" ──────────────────────────────────────────────────────── */
+.cine-dica {
+  position: absolute;
+  z-index: 6;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  opacity: 0.6;
+  transition: opacity 0.5s;
+}
+.cine-dica span {
+  width: 1px;
+  height: 38px;
+  background: linear-gradient(var(--texto), transparent);
+  animation: cine-dica 2s var(--ease) infinite;
+}
+@keyframes cine-dica {
+  0% { transform: scaleY(0); transform-origin: top; }
+  50% { transform: scaleY(1); transform-origin: top; }
+  51% { transform-origin: bottom; }
+  100% { transform: scaleY(0); transform-origin: bottom; }
+}
+.cine-abertura.andou .cine-dica {
+  opacity: 0;
+}
+
+/* ── Celular ──────────────────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .cine-momento,
+  .cine-momento--direita {
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: 10vh;
+  }
+  .cine-momento--centro {
+    left: 50%;
+    right: auto;
+  }
+}
+
+/* ── Movimento reduzido: palco estático com o título ──────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .cine-abertura {
+    height: 100svh;
+  }
+  .cine-abertura *,
+  .cine-abertura *::before,
+  .cine-abertura *::after,
+  .cine-palco::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .cine-momento,
+  .cine-dica {
+    display: none;
+  }
+}
+
+/* O header fixo do site some enquanto a abertura (que tem o próprio header)
+   está na tela, e volta normalmente depois dela. */
+html[data-cine-ativa] .site-header-slot > header {
+  opacity: 0;
+  transform: translateY(-100%);
+  pointer-events: none;
+}
