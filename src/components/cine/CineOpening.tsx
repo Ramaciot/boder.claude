@@ -14,18 +14,20 @@ import "./cine.css";
  * direção à tela). Por cima: splash no molde da Lusion (cineSplash.ts), título
  * editorial e painéis de vidro.
  *
- * Desempenho (mobile primeiro):
+ * Player (mobile primeiro):
  *  - Repouso SEM loop: parado, nada roda em JS. A "vida" da cena (astronauta
  *    respirando, brilho, anel, partículas sugadas, poeira) é CSS de
  *    transform/opacity. O requestAnimationFrame só existe enquanto o quadro
- *    está alcançando a rolagem e para sozinho quando alcança.
- *  - Quadros por janela: o 1º na hora; depois só uma janela à frente (e um
- *    pouco atrás) de onde a rolagem está, no máximo 4 downloads simultâneos,
- *    decode assíncrono; um "esqueleto" esparso (1 a cada 10) entra quando o
- *    navegador fica ocioso, para cobrir rolagens rápidas. Nunca todos de uma vez.
+ *    está alcançando a rolagem (suavização 0,18) e para sozinho quando alcança.
+ *  - Pré-carga em passadas: 1 a cada 8 quadros, depois a cada 4, 2 e 1, em
+ *    lotes de 6 a cada 40 ms. Logo no início há quadros espalhados pelo filme
+ *    todo; a densidade aumenta até completar.
+ *  - Pré-decodificação: em tempo ocioso (requestIdleCallback), a janela de ±8
+ *    quadros em volta do atual é decodificada antes de ser desenhada. Nunca no
+ *    handler de scroll, que só acorda o loop.
+ *  - Canvas na resolução da fonte: o tamanho interno é o recorte "cover" do
+ *    quadro, nunca maior que o quadro (nem que a tela × DPR até 2).
  *  - Fora da tela: loop parado e todas as animações CSS da abertura pausadas.
- *  - Canvas com devicePixelRatio limitado a 2 e sem refazer tudo quando a
- *    barra de endereço do celular aparece/some.
  *
  * Unificação com o site: no trecho final (88%→100%) a cena se dissolve até
  * ficar transparente, revelando o fundo do próprio site.
@@ -61,9 +63,12 @@ const MOMENTS = [
 /** A partir deste progresso a cena se dissolve no fundo do site. */
 const SAIDA_INICIO = 0.88;
 
-/** Janela de pré-carregamento em volta do quadro atual. */
-const JANELA = { frente: 14, tras: 4 };
-const MAX_DOWNLOADS = 4;
+/** Pré-carga: passadas (passo entre quadros) e ritmo dos lotes. */
+const PASSADAS = [8, 4, 2, 1] as const;
+const LOTE = 6;
+const LOTE_MS = 40;
+/** Janela pré-decodificada em tempo ocioso, em volta do quadro atual. */
+const VIZINHOS = 8;
 
 /** Partículas sugadas pela logo: ângulo de partida, raio (× diâmetro), duração, atraso. */
 const SUGADAS = Array.from({ length: 18 }, (_, i) => ({
@@ -117,14 +122,14 @@ export const CineOpening = () => {
     // lidas do 1º quadro carregado). 0 = ainda desconhecidas.
     let fonte = { w: 0, h: 0 };
 
-    // ── Quadros: carga por janela ─────────────────────────────────────────
+    // ── Quadros: pré-carga em passadas + pré-decodificação ociosa ───────
     let quadros: (HTMLImageElement | null)[] = [];
-    let prontos: boolean[] = [];
-    let pedidos: boolean[] = [];
+    let prontos: boolean[] = []; // baixado
+    let decodificados: boolean[] = []; // decodificado (pronto para desenhar sem travar)
     let fila: number[] = [];
-    let baixando = 0;
+    let loteId = 0;
+    let decodeId = 0;
     let geracao = 0;
-    let idleId = 0;
     let disposed = false;
 
     // Progresso da rolagem (0–1): alvo = real; atual = suavizado
@@ -134,8 +139,9 @@ export const CineOpening = () => {
     let raf = 0;
     let visivel = true;
     let saidaAplicada = -1;
-    let ultimaJanela = -99;
+    let ultimoIdx = -1;
     let tamanho = { w: 0, h: 0 };
+    let recorte = { x: 0, y: 0, w: 0, h: 0 }; // área "cover" do quadro, em px da fonte
 
     const indice = (p: number) => Math.round(p * Math.max(0, total - 1));
 
@@ -147,92 +153,132 @@ export const CineOpening = () => {
       return -1;
     };
 
+    /**
+     * Canvas na resolução da fonte: o tamanho interno é o recorte "cover" do
+     * quadro para o formato do palco — nunca maior que o quadro, e também não
+     * maior que o palco × DPR (máx. 2), que seria só pixel desperdiçado.
+     */
+    const dimensionarCanvas = () => {
+      const { w, h } = tamanho;
+      if (!w || !h || !fonte.w || !fonte.h) return;
+      const s = Math.max(w / fonte.w, h / fonte.h);
+      const rw = Math.min(fonte.w, w / s);
+      const rh = Math.min(fonte.h, h / s);
+      recorte = { x: (fonte.w - rw) / 2, y: (fonte.h - rh) / 2, w: rw, h: rh };
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const k = Math.min(1, (w * dpr) / rw);
+      const cw = Math.max(1, Math.round(rw * k));
+      const ch = Math.max(1, Math.round(rh * k));
+      if (canvas.width !== cw || canvas.height !== ch) {
+        canvas.width = cw;
+        canvas.height = ch;
+        ctx.imageSmoothingQuality = "high";
+      }
+      desenhado = -1;
+    };
+
     const desenhar = (i: number, forcar = false) => {
       const j = maisProximo(i);
-      if (j < 0 || (j === desenhado && !forcar)) return;
+      if (j < 0 || (j === desenhado && !forcar) || !recorte.w) return;
       const img = quadros[j]!;
-      const cw = canvas.width;
-      const ch = canvas.height;
-      const escala = Math.max(cw / img.naturalWidth, ch / img.naturalHeight); // "cover"
-      const w = img.naturalWidth * escala;
-      const h = img.naturalHeight * escala;
-      ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
+      // Recorte em coordenadas da fonte (escala caso o arquivo difira do json)
+      const fx = img.naturalWidth / fonte.w;
+      const fy = img.naturalHeight / fonte.h;
+      ctx.drawImage(img, recorte.x * fx, recorte.y * fy, recorte.w * fx, recorte.h * fy, 0, 0, canvas.width, canvas.height);
       desenhado = j;
+      decodificados[j] = true; // desenhar já deixa o quadro decodificado
     };
 
-    const bombear = () => {
-      while (baixando < MAX_DOWNLOADS && fila.length) {
-        const i = fila.shift()!;
-        if (pedidos[i]) continue;
-        pedidos[i] = true;
-        baixando++;
-        const g = geracao;
-        const img = new Image();
-        img.decoding = "async";
-        img.src = frameUrl(cfg!, set, i + 1);
-        quadros[i] = img;
-        const fim = (ok: boolean) => {
-          if (g !== geracao || disposed) return;
-          baixando--;
-          if (ok) {
-            prontos[i] = true;
-            // Só redesenha se este quadro é melhor que o que está na tela
-            const alvoIdx = indice(atual);
-            // 1º quadro pronto: dimensões reais (o mobile retrato não está no json)
-            if (i === 0 && (img.naturalWidth !== fonte.w || img.naturalHeight !== fonte.h)) {
-              fonte = { w: img.naturalWidth, h: img.naturalHeight };
-              splash?.medir(fonte, set);
-              splash?.atualizar(atual);
-            }
-            if (desenhado < 0 || Math.abs(i - alvoIdx) < Math.abs(desenhado - alvoIdx)) desenhar(alvoIdx, true);
+    /** Ordem da pré-carga: passadas de 8, 4, 2 e 1 (sem repetir). */
+    const ordemPassadas = (primeiro: number) => {
+      const ordem = [primeiro];
+      const visto = new Set(ordem);
+      for (const passo of PASSADAS)
+        for (let i = 0; i < total; i += passo)
+          if (!visto.has(i)) {
+            visto.add(i);
+            ordem.push(i);
           }
-          bombear();
-        };
-        img
-          .decode()
-          .then(() => fim(true))
-          .catch(() => fim(img.complete && img.naturalWidth > 0));
-      }
+      return ordem;
     };
 
-    /** Prioriza a janela em volta de `idx` (à frente primeiro). */
-    const janela = (idx: number) => {
-      if (reduzir) return;
-      const novos: number[] = [];
-      for (let d = 0; d <= JANELA.frente; d++) if (idx + d < total) novos.push(idx + d);
-      for (let d = 1; d <= JANELA.tras; d++) if (idx - d >= 0) novos.push(idx - d);
-      fila = [...novos.filter((i) => !pedidos[i]), ...fila.filter((i) => !novos.includes(i))];
-      bombear();
+    const pedir = (i: number) => {
+      const g = geracao;
+      const img = new Image();
+      img.decoding = "async";
+      quadros[i] = img;
+      img.onload = () => {
+        if (g !== geracao || disposed) return;
+        prontos[i] = true;
+        // 1º quadro que chega: dimensões reais (o mobile não está no json)
+        if (img.naturalWidth !== fonte.w || img.naturalHeight !== fonte.h) {
+          fonte = { w: img.naturalWidth, h: img.naturalHeight };
+          dimensionarCanvas();
+          splash?.medir(fonte, set);
+          splash?.atualizar(atual);
+        }
+        // Só redesenha se este quadro é melhor que o que está na tela
+        const alvoIdx = indice(atual);
+        if (desenhado < 0 || Math.abs(i - alvoIdx) < Math.abs(desenhado - alvoIdx)) desenhar(alvoIdx, true);
+        if (Math.abs(i - alvoIdx) <= VIZINHOS) agendarDecode();
+      };
+      img.src = frameUrl(cfg!, set, i + 1);
     };
 
-    /** Esqueleto esparso (1 a cada 10) quando o navegador está ocioso. */
-    const esqueleto = () => {
-      if (reduzir) return;
-      const pendentes: number[] = [];
-      for (let i = 0; i < total; i += 10) if (!pedidos[i]) pendentes.push(i);
-      fila = [...fila, ...pendentes.filter((i) => !fila.includes(i))];
-      bombear();
+    /** Um lote de 6 pedidos; o próximo sai 40 ms depois, até esvaziar a fila. */
+    const lote = () => {
+      loteId = 0;
+      if (disposed) return;
+      for (let n = 0; n < LOTE && fila.length; n++) pedir(fila.shift()!);
+      if (fila.length) loteId = window.setTimeout(lote, LOTE_MS);
+    };
+
+    /** Pré-decodifica, em tempo ocioso, os ±8 quadros em volta do atual. */
+    const decodificarVizinhos = () => {
+      decodeId = 0;
+      if (disposed || !total) return;
+      const g = geracao;
+      const centro = indice(atual);
+      for (let d = 0; d <= VIZINHOS; d++)
+        for (const i of d ? [centro + d, centro - d] : [centro]) {
+          const img = quadros[i];
+          if (i < 0 || i >= total || !img || !prontos[i] || decodificados[i]) continue;
+          decodificados[i] = true; // evita pedir de novo enquanto decodifica
+          img.decode().catch(() => {
+            if (g === geracao) decodificados[i] = false;
+          });
+        }
+    };
+    const agendarDecode = () => {
+      if (decodeId || disposed || reduzir) return;
+      decodeId =
+        typeof window.requestIdleCallback === "function"
+          ? window.requestIdleCallback(decodificarVizinhos, { timeout: 300 })
+          : window.setTimeout(decodificarVizinhos, 60);
+    };
+    const cancelarDecode = () => {
+      if (!decodeId) return;
+      if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(decodeId);
+      else window.clearTimeout(decodeId);
+      decodeId = 0;
     };
 
     const iniciarQuadros = () => {
       if (!cfg) return;
       geracao++;
+      if (loteId) window.clearTimeout(loteId);
+      loteId = 0;
+      cancelarDecode();
       fonte = set === "desktop" ? { w: cfg.largura, h: cfg.altura } : { w: 0, h: 0 };
       quadros = new Array(total).fill(null);
       prontos = new Array(total).fill(false);
-      pedidos = new Array(total).fill(false);
-      fila = [0];
-      baixando = 0;
+      decodificados = new Array(total).fill(false);
       desenhado = -1;
-      ultimaJanela = -99;
-      bombear();
-      janela(indice(atual));
-      const agendar = () => {
-        if (typeof window.requestIdleCallback === "function") idleId = window.requestIdleCallback(esqueleto, { timeout: 4000 });
-        else window.setTimeout(esqueleto, 2500);
-      };
-      if (document.readyState === "complete") agendar();
-      else window.addEventListener("load", agendar, { once: true });
+      ultimoIdx = -1;
+      dimensionarCanvas();
+      // Movimento reduzido: só o quadro de repouso.
+      fila = reduzir ? [0] : ordemPassadas(indice(atual));
+      lote();
     };
 
     // ── Splash (wordmark que vira header + meteoro) ─────────────────────
@@ -293,10 +339,12 @@ export const CineOpening = () => {
       atualizarMomentos(p);
       splash?.atualizar(p);
 
-      const idx = indice(alvo);
-      if (Math.abs(idx - ultimaJanela) >= 2) {
-        ultimaJanela = idx;
-        janela(idx);
+      // Mudou de quadro: pede a pré-decodificação dos vizinhos para o tempo
+      // ocioso (o handler de scroll em si só acorda este loop).
+      const idx = indice(p);
+      if (idx !== ultimoIdx) {
+        ultimoIdx = idx;
+        agendarDecode();
       }
       if (atual !== alvo) raf = requestAnimationFrame(quadro);
     };
@@ -310,10 +358,7 @@ export const CineOpening = () => {
       const h = palco.clientHeight;
       if (!forcar && w === tamanho.w && h === tamanho.h) return;
       tamanho = { w, h };
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(h * dpr);
-      desenhado = -1;
+      dimensionarCanvas();
       if (total) desenhar(indice(atual), true);
       splash?.medir(fonte, set);
       splash?.atualizar(atual);
@@ -372,7 +417,8 @@ export const CineOpening = () => {
       disposed = true;
       geracao++;
       if (raf) cancelAnimationFrame(raf);
-      if (idleId && typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idleId);
+      if (loteId) window.clearTimeout(loteId);
+      cancelarDecode();
       io.disconnect();
       document.documentElement.removeAttribute("data-cine-ativa");
       document.documentElement.removeAttribute("data-cine-splash");
