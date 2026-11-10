@@ -17,8 +17,13 @@ import "./cine.css";
  * Player (mobile primeiro):
  *  - Repouso SEM loop: parado, nada roda em JS. A "vida" da cena (astronauta
  *    respirando, brilho, anel, partículas sugadas, poeira) é CSS de
- *    transform/opacity. O requestAnimationFrame só existe enquanto o quadro
- *    está alcançando a rolagem (suavização 0,18) e para sozinho quando alcança.
+ *    transform/opacity. O requestAnimationFrame só existe enquanto há rolagem
+ *    e durante o assentamento; depois para sozinho.
+ *  - Scroll suave no molde da Lusion: o quadro é dirigido por um valor
+ *    amortecido (mola criticamente amortecida, por tempo — igual a 60 ou
+ *    120 Hz), que acelera e desacelera sem tranco e nunca passa do ponto.
+ *    Quando a página para, o destino vira o quadro inteiro mais próximo e a
+ *    cena desacelera até assentar nele — sem o "rabo" que fica escorregando.
  *  - Pré-carga em passadas: 1 a cada 8 quadros, depois a cada 4, 2 e 1, em
  *    lotes de 6 a cada 40 ms. Logo no início há quadros espalhados pelo filme
  *    todo; a densidade aumenta até completar.
@@ -73,6 +78,12 @@ const SAIDA_INICIO = 0.88;
 const PASSADAS = [8, 4, 2, 1] as const;
 const LOTE = 6;
 const LOTE_MS = 40;
+/** Rolagem parada há este tempo = destino vira o quadro inteiro mais próximo. */
+const PARADA_MS = 90;
+/** Tempo de suavização da mola (s): durante a rolagem e no assentamento. */
+const SUAVE_ROLANDO = 0.1;
+const SUAVE_ASSENTA = 0.14;
+
 /** Janela pré-decodificada em tempo ocioso, em volta do quadro atual. */
 const VIZINHOS = 8;
 
@@ -138,7 +149,8 @@ export const CineOpening = () => {
     let geracao = 0;
     let disposed = false;
 
-    // Progresso da rolagem (0–1): alvo = real; atual = suavizado
+    // Progresso da rolagem (0–1): alvo = real (posição da página); atual = o
+    // que a cena mostra (amortecido; parado, assenta no quadro inteiro)
     let alvo = 0;
     let atual = 0;
     let desenhado = -1;
@@ -146,6 +158,10 @@ export const CineOpening = () => {
     let visivel = true;
     let saidaAplicada = -1;
     let ultimoIdx = -1;
+    let alvoAnterior = -1;
+    let ultimoMovimento = 0;
+    let velocidade = 0; // da mola, em progresso/s
+    let tAnterior = 0;
     let tamanho = { w: 0, h: 0 };
     let recorte = { x: 0, y: 0, w: 0, h: 0 }; // área "cover" do quadro, em px da fonte
 
@@ -341,13 +357,49 @@ export const CineOpening = () => {
       }
     };
 
-    // ── Loop: só enquanto o quadro está alcançando a rolagem ───────────
-    const quadro = () => {
+    // ── Loop: só enquanto há rolagem e durante o assentamento ─────────
+    /** Progresso do quadro inteiro mais próximo. */
+    const noQuadro = (p: number) => (total > 1 ? indice(p) / (total - 1) : p);
+
+    /**
+     * Mola criticamente amortecida (smooth damp): leva `atual` até `destino`
+     * em ~`suave` s, sem passar do ponto. Independente da taxa de quadros.
+     */
+    const amortecer = (destino: number, suave: number, dt: number) => {
+      const w = 2 / suave;
+      const x = w * dt;
+      const k = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
+      const delta = atual - destino;
+      const temp = (velocidade + w * delta) * dt;
+      velocidade = (velocidade - w * temp) * k;
+      let novo = destino + (delta + temp) * k;
+      if (destino - atual > 0 === novo > destino) {
+        novo = destino;
+        velocidade = 0;
+      }
+      atual = novo;
+    };
+
+    const quadro = (agora: number) => {
       raf = 0;
       if (!visivel) return;
+      const dt = tAnterior ? Math.min(0.05, Math.max(0.001, (agora - tAnterior) / 1000)) : 1 / 60;
+      tAnterior = agora;
       alvo = progresso();
-      atual += (alvo - atual) * 0.18; // suaviza: sensação de filme, não de slide
-      if (Math.abs(alvo - atual) < 0.0004) atual = alvo;
+      if (alvo !== alvoAnterior) {
+        alvoAnterior = alvo;
+        ultimoMovimento = agora;
+      }
+      const parado = agora - ultimoMovimento >= PARADA_MS;
+      // Rolando: persegue a página, suave. Parado: assenta no quadro inteiro.
+      const destino = parado ? noQuadro(alvo) : alvo;
+      amortecer(destino, parado ? SUAVE_ASSENTA : SUAVE_ROLANDO, dt);
+      let continuar = true;
+      if (parado && Math.abs(atual - destino) < 0.00015 && Math.abs(velocidade) < 0.002) {
+        atual = destino;
+        velocidade = 0;
+        continuar = false;
+      }
       const p = atual;
 
       if (total) desenhar(indice(p));
@@ -361,10 +413,14 @@ export const CineOpening = () => {
         ultimoIdx = idx;
         agendarDecode();
       }
-      if (atual !== alvo) raf = requestAnimationFrame(quadro);
+      if (continuar) raf = requestAnimationFrame(quadro);
+      else tAnterior = 0;
     };
     const acordar = () => {
-      if (!reduzir && visivel && !raf) raf = requestAnimationFrame(quadro);
+      if (!reduzir && visivel && !raf) {
+        tAnterior = 0;
+        raf = requestAnimationFrame(quadro);
+      }
     };
 
     // ── Tamanho: só refaz se o palco mudou de verdade ───────────────────
