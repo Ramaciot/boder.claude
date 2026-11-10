@@ -265,6 +265,28 @@
   animation-play-state: paused !important;
 }
 
+/* ── Logo oficial sobre o meteoro do filme ────────────────────────────
+   Acima do canvas e da poeira, abaixo do grão, do título e dos painéis.
+   A opacidade vem do JS (progresso da rolagem). */
+.cine-logo-broadcast {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  top: 34%;
+  width: clamp(130px, 14%, 300px);
+  height: auto;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  user-select: none;
+}
+/* Celular em pé (mesmo critério do conjunto retrato no player) */
+@media (max-width: 760px) and (orientation: portrait) {
+  .cine-logo-broadcast {
+    top: 39%;
+    width: min(55%, 460px);
+  }
+}
+
 /* ── Título que sai da tela ───────────────────────────────────────────── */
 .cine-titulo-sair {
   opacity: 0; /* entra depois que o wordmark voou (JS) */
@@ -373,12 +395,14 @@
 }
 
 /* ── Dica "role" ──────────────────────────────────────────────────────── */
+/* Dica de rolagem: logo acima do wordmark gigante (o JS mede a altura dele
+   em --wordmark-topo) e no canto direito, para não cobrir o astronauta no
+   centro; z-index acima do wordmark. */
 .cine-dica {
   position: absolute;
-  z-index: 6;
-  bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%);
+  z-index: 12;
+  bottom: calc(var(--wordmark-topo, 24vh) + 14px);
+  right: var(--gutter);
   display: grid;
   justify-items: center;
   gap: 8px;

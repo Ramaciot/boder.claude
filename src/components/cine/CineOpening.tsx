@@ -91,6 +91,13 @@ const MOMENTS = [
 ] as const;
 /** A partir deste progresso a cena se dissolve no fundo do site. */
 const SAIDA_INICIO = 0.88;
+/**
+ * Logo oficial por cima do meteoro do filme: opacidade 1 até 78% do
+ * progresso, cai linear até 0 em 88% e fica em 0 — some antes do close
+ * final, cujo reflexo na viseira já é a logo.
+ */
+const LOGO_SOME = [0.78, 0.88] as const;
+const LOGO_URL = { webp: "/cine/assets/logo3d-rgba.webp", png: "/cine/assets/logo3d-rgba.png" };
 
 /** Pré-carga: passadas (passo entre quadros) e ritmo dos lotes. */
 const PASSADAS = [8, 4, 2, 1] as const;
@@ -129,6 +136,7 @@ export const CineOpening = () => {
   const wordmarkRef = useRef<HTMLDivElement>(null);
   const slotRef = useRef<HTMLSpanElement>(null);
   const logoFlatRef = useRef<HTMLImageElement>(null);
+  const logoBroadcastRef = useRef<HTMLImageElement>(null);
 
   useCineFonts();
 
@@ -168,6 +176,7 @@ export const CineOpening = () => {
     let raf = 0;
     let visivel = true;
     let saidaAplicada = -1;
+    let logoAplicada = -1;
     let ultimoIdx = -1;
     let alvoAnterior = -1;
     let ultimoMovimento = 0;
@@ -405,6 +414,12 @@ export const CineOpening = () => {
         saidaAplicada = saida;
         section.style.setProperty("--saida", String(saida));
       }
+      // Logo oficial sobre o meteoro: mesmo progresso que move os quadros
+      const logo = Math.round((1 - Math.min(1, Math.max(0, (p - LOGO_SOME[0]) / (LOGO_SOME[1] - LOGO_SOME[0])))) * 1000) / 1000;
+      if (logo !== logoAplicada && logoBroadcastRef.current) {
+        logoAplicada = logo;
+        logoBroadcastRef.current.style.opacity = String(logo);
+      }
     };
 
     // ── Loop: só enquanto há rolagem e durante o assentamento ─────────
@@ -562,6 +577,22 @@ export const CineOpening = () => {
           </div>
           <div className="cine-vinheta" />
         </div>
+
+        {/* Logo oficial por cima do meteoro do filme (acima do canvas, abaixo
+            dos painéis); opacidade dirigida pelo progresso da rolagem */}
+        <picture>
+          <source srcSet={LOGO_URL.webp} type="image/webp" />
+          <img
+            ref={logoBroadcastRef}
+            src={LOGO_URL.png}
+            alt=""
+            aria-hidden="true"
+            className="cine-logo-broadcast"
+            width={700}
+            height={846}
+            decoding="async"
+          />
+        </picture>
 
         <header className="cine-topo">
           <a href="#inicio" className="cine-marca" aria-label="Boder Space" onClick={goTo("inicio")}>
