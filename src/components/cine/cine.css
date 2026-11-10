@@ -265,26 +265,28 @@
   animation-play-state: paused !important;
 }
 
-/* ── Logo oficial sobre o meteoro do filme ────────────────────────────
-   Acima do canvas e da poeira, abaixo do grão, do título e dos painéis.
-   A opacidade vem do JS (progresso da rolagem). */
-.cine-logo-broadcast {
+/* ── Véu sobre o glifo do meteoro ─────────────────────────────────────
+   Círculo preto com borda bem esfumada, logo acima do canvas (o portal, o
+   feixe e os detritos seguem visíveis em volta). Tamanho, posição (segue o
+   glifo no filme) e opacidade vêm do JS — só transform/opacity animam. */
+.cine-veu {
   position: absolute;
-  z-index: 5;
-  left: 50%;
-  top: 34%;
-  width: clamp(130px, 14%, 300px);
-  height: auto;
-  transform: translate(-50%, -50%);
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  opacity: 0;
   pointer-events: none;
-  user-select: none;
-}
-/* Celular em pé (mesmo critério do conjunto retrato no player) */
-@media (max-width: 760px) and (orientation: portrait) {
-  .cine-logo-broadcast {
-    top: 39%;
-    width: min(55%, 460px);
-  }
+  border-radius: 50%;
+  will-change: transform, opacity;
+  background: radial-gradient(
+    circle closest-side,
+    rgb(0 0 0 / 1) 0%,
+    rgb(0 0 0 / 0.98) 50%,
+    rgb(0 0 0 / 0.66) 74%,
+    rgb(0 0 0 / 0.22) 90%,
+    rgb(0 0 0 / 0) 100%
+  );
 }
 
 /* ── Título que sai da tela ───────────────────────────────────────────── */

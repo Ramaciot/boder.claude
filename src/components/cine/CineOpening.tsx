@@ -4,6 +4,8 @@ import { useMeetingForm } from "@/contexts/MeetingFormContext";
 // próprio filme (quadros), sem sobreposição.
 import cineLogo from "@/assets/boder-logo.webp";
 import { criarSplash } from "./cineSplash";
+import { veuNoQuadro } from "./cineVeu";
+import { criarDeslize } from "./cineDeslize";
 import "./cine.css";
 
 /**
@@ -91,13 +93,6 @@ const MOMENTS = [
 ] as const;
 /** A partir deste progresso a cena se dissolve no fundo do site. */
 const SAIDA_INICIO = 0.88;
-/**
- * Logo oficial por cima do meteoro do filme: opacidade 1 até 78% do
- * progresso, cai linear até 0 em 88% e fica em 0 — some antes do close
- * final, cujo reflexo na viseira já é a logo.
- */
-const LOGO_SOME = [0.78, 0.88] as const;
-const LOGO_URL = { webp: "/cine/assets/logo3d-rgba.webp", png: "/cine/assets/logo3d-rgba.png" };
 
 /** Pré-carga: passadas (passo entre quadros) e ritmo dos lotes. */
 const PASSADAS = [8, 4, 2, 1] as const;
@@ -127,7 +122,10 @@ const useCineFonts = () => {
 };
 
 export const CineOpening = () => {
-  const { openMeetingForm } = useMeetingForm();
+  const { openMeetingForm, isOpen: formAberto } = useMeetingForm();
+  // O deslize automático pausa enquanto o formulário de agendamento está aberto
+  const formAbertoRef = useRef(formAberto);
+  formAbertoRef.current = formAberto;
   const sectionRef = useRef<HTMLElement>(null);
   const palcoRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -136,7 +134,7 @@ export const CineOpening = () => {
   const wordmarkRef = useRef<HTMLDivElement>(null);
   const slotRef = useRef<HTMLSpanElement>(null);
   const logoFlatRef = useRef<HTMLImageElement>(null);
-  const logoBroadcastRef = useRef<HTMLImageElement>(null);
+  const veuRef = useRef<HTMLDivElement>(null);
 
   useCineFonts();
 
@@ -176,7 +174,7 @@ export const CineOpening = () => {
     let raf = 0;
     let visivel = true;
     let saidaAplicada = -1;
-    let logoAplicada = -1;
+    let veuAplicado = "";
     let ultimoIdx = -1;
     let alvoAnterior = -1;
     let ultimoMovimento = 0;
@@ -204,6 +202,40 @@ export const CineOpening = () => {
     const util = () => {
       const u = info?.util;
       return u && u.h > 0 && u.y >= 0 && u.y + u.h <= fonte.h ? u : { y: 0, h: fonte.h };
+    };
+
+    /**
+     * Véu sobre o glifo do meteoro: segue a trilha medida no filme (cineVeu)
+     * pelo mesmo progresso dos quadros, convertida para o palco com a mesma
+     * geometria do canvas (recorte "cover" da área útil, ou quadro inteiro
+     * em "contain" no retrato). Só transform/opacity: barato no celular.
+     */
+    const posicionarVeu = (p: number) => {
+      const el = veuRef.current;
+      if (!el) return;
+      const { w: W, h: H } = tamanho;
+      const pronto = !!(W && H && fonte.w && fonte.h && total && (info?.inteiro || recorte.w));
+      const formato = info?.inteiro ? "retrato" : "paisagem";
+      const v = veuNoQuadro(formato, 1 + p * (total - 1));
+      let x = 0;
+      let y = 0;
+      if (pronto && info?.inteiro) {
+        const s = Math.min(W / fonte.w, H / fonte.h);
+        x = (W - fonte.w * s) / 2 + v.x * fonte.w * s;
+        y = (H - fonte.h * s) / 2 + v.y * fonte.h * s;
+      } else if (pronto) {
+        const u = util();
+        x = (v.x * fonte.w - recorte.x) * (W / recorte.w);
+        y = (u.y + v.y * u.h - recorte.y) * (H / recorte.h);
+      }
+      const r = v.raio * W;
+      const a = pronto ? Math.round(v.a * 1000) / 1000 : 0;
+      const estado = `${x.toFixed(1)},${y.toFixed(1)},${r.toFixed(1)},${a}`;
+      if (estado === veuAplicado) return;
+      veuAplicado = estado;
+      el.style.width = el.style.height = `${(2 * r).toFixed(1)}px`;
+      el.style.transform = `translate3d(${(x - r).toFixed(1)}px, ${(y - r).toFixed(1)}px, 0)`;
+      el.style.opacity = String(a);
     };
 
     const dimensionarCanvas = () => {
@@ -276,6 +308,7 @@ export const CineOpening = () => {
         if (img.naturalWidth !== fonte.w || img.naturalHeight !== fonte.h) {
           fonte = { w: img.naturalWidth, h: img.naturalHeight };
           dimensionarCanvas();
+          posicionarVeu(atual);
         }
         // Só redesenha se este quadro é melhor que o que está na tela
         const alvoIdx = indice(atual);
@@ -414,12 +447,7 @@ export const CineOpening = () => {
         saidaAplicada = saida;
         section.style.setProperty("--saida", String(saida));
       }
-      // Logo oficial sobre o meteoro: mesmo progresso que move os quadros
-      const logo = Math.round((1 - Math.min(1, Math.max(0, (p - LOGO_SOME[0]) / (LOGO_SOME[1] - LOGO_SOME[0])))) * 1000) / 1000;
-      if (logo !== logoAplicada && logoBroadcastRef.current) {
-        logoAplicada = logo;
-        logoBroadcastRef.current.style.opacity = String(logo);
-      }
+      posicionarVeu(p);
     };
 
     // ── Loop: só enquanto há rolagem e durante o assentamento ─────────
@@ -498,6 +526,7 @@ export const CineOpening = () => {
       if (total) desenhar(indice(atual), true);
       splash?.medir();
       splash?.atualizar(atual);
+      posicionarVeu(atual);
     };
     const aoRedimensionar = () => ajustar();
 
@@ -512,9 +541,13 @@ export const CineOpening = () => {
     // Visibilidade: fora da tela, loop parado e animações CSS pausadas
     // (classe em-cena). Também esconde o header fixo do site enquanto a
     // abertura — que tem o próprio header — está na tela.
+    // Deslize automático (Lusion): arma no 1º gesto dentro da abertura
+    const deslize = criarDeslize({ section, permitido: () => !formAbertoRef.current });
+
     const io = new IntersectionObserver(
       ([entry]) => {
         visivel = entry.isIntersecting;
+        deslize.visibilidade(visivel);
         document.documentElement.toggleAttribute("data-cine-ativa", visivel);
         section.classList.toggle("em-cena", visivel);
         if (visivel) acordar();
@@ -546,6 +579,7 @@ export const CineOpening = () => {
       if (raf) cancelAnimationFrame(raf);
       if (loteId) window.clearTimeout(loteId);
       cancelarDecode();
+      deslize.destruir();
       io.disconnect();
       document.documentElement.removeAttribute("data-cine-ativa");
       document.documentElement.removeAttribute("data-cine-splash");
@@ -569,6 +603,8 @@ export const CineOpening = () => {
           <div className="cine-respira">
             <canvas ref={canvasRef} className="cine-canvas" aria-hidden="true" />
           </div>
+          {/* Véu radial escuro que apaga o glifo do meteoro desenhado no filme */}
+          <div ref={veuRef} className="cine-veu" aria-hidden="true" />
 
           <div className="cine-poeira" aria-hidden="true">
             <span />
@@ -578,21 +614,6 @@ export const CineOpening = () => {
           <div className="cine-vinheta" />
         </div>
 
-        {/* Logo oficial por cima do meteoro do filme (acima do canvas, abaixo
-            dos painéis); opacidade dirigida pelo progresso da rolagem */}
-        <picture>
-          <source srcSet={LOGO_URL.webp} type="image/webp" />
-          <img
-            ref={logoBroadcastRef}
-            src={LOGO_URL.png}
-            alt=""
-            aria-hidden="true"
-            className="cine-logo-broadcast"
-            width={700}
-            height={846}
-            decoding="async"
-          />
-        </picture>
 
         <header className="cine-topo">
           <a href="#inicio" className="cine-marca" aria-label="Boder Space" onClick={goTo("inicio")}>
