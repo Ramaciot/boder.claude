@@ -63,10 +63,10 @@ const MeetingFormGate = () => {
 };
 
 const App = () => {
-  // Protótipo GL da abertura: ?gl=1 monta o GlOpening no lugar do CineOpening.
-  // Sem a flag, tudo como está.
+  // Abertura padrão nesta branch: cena WebGL (GlOpening). A abertura de frames
+  // (CineOpening) só é montada com ?gl=0, para comparação.
   const { search } = useLocation();
-  const abertura = new URLSearchParams(search).get("gl") === "1" ? "gl" : "cine";
+  const abertura = new URLSearchParams(search).get("gl") === "0" ? "cine" : "gl";
 
   return (
     <MeetingFormProvider>

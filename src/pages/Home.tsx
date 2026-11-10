@@ -10,15 +10,17 @@ import { Footer } from "@/components/Footer";
 import { ChatBotLazy } from "@/components/ChatBotLazy";
 import { BrandBackground } from "@/components/BrandBackground";
 import { useScrollReveal } from "@/lib/useScrollReveal";
-import { CineOpening } from "@/components/cine/CineOpening";
+import { GlOpening } from "@/components/gl/GlOpening";
 
-// Protótipo GL (branch prototipo-gl): só é baixado com ?gl=1
-const GlOpening = lazy(() => import("@/components/gl/GlOpening"));
+// Abertura de frames: só com ?gl=0 (comparação); fora do carregamento padrão
+const CineOpening = lazy(() =>
+  import("@/components/cine/CineOpening").then((m) => ({ default: m.CineOpening })),
+);
 
 interface HomeProps {
   /** Id de seção para rolar ao montar (ex.: rota /servicos). */
   scrollTo?: string;
-  /** "gl" = protótipo WebGL da abertura (?gl=1); padrão = abertura atual. */
+  /** "gl" (padrão) = cena WebGL; "cine" = abertura de frames (?gl=0). */
   abertura?: "cine" | "gl";
 }
 
@@ -27,7 +29,7 @@ interface HomeProps {
  * ordem de seções do site oficial:
  * Hero → Serviços → Sites que Vendem → App → Depoimentos → CTA (FAQ fica no rodapé).
  */
-const Home = ({ scrollTo, abertura = "cine" }: HomeProps) => {
+const Home = ({ scrollTo, abertura = "gl" }: HomeProps) => {
   useScrollReveal();
 
   useEffect(() => {
@@ -51,11 +53,11 @@ const Home = ({ scrollTo, abertura = "cine" }: HomeProps) => {
         </div>
         <main>
           {abertura === "gl" ? (
-            <Suspense fallback={<div className="cine-abertura" style={{ height: "460vh" }} />}>
-              <GlOpening />
-            </Suspense>
+            <GlOpening />
           ) : (
-            <CineOpening />
+            <Suspense fallback={<div className="cine-abertura" style={{ height: "460vh" }} />}>
+              <CineOpening />
+            </Suspense>
           )}
           <Hero />
           <Services />
