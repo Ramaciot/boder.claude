@@ -1,7 +1,7 @@
 import { useEffect, useRef, type CSSProperties, type MouseEvent } from "react";
 import { useMeetingForm } from "@/contexts/MeetingFormContext";
-// Logo oficial (flat) = marca do cabeçalho. A logo 3D é elemento da CENA
-// (o meteoro no portal), nunca logo de interface.
+// Logo oficial (flat) = marca do cabeçalho. A logo-meteoro 3D vem dentro do
+// próprio filme (quadros), sem sobreposição.
 import cineLogo from "@/assets/boder-logo.webp";
 import { criarSplash } from "./cineSplash";
 import "./cine.css";
@@ -39,14 +39,18 @@ import "./cine.css";
  */
 
 const MOBILE_QUERY = "(max-width: 760px)";
+/** Celular em pé: filme vertical próprio (9:16), mostrado inteiro. */
+const RETRATO_QUERY = "(max-width: 760px) and (orientation: portrait)";
 
 /**
- * Configuração dos quadros vem do próprio pacote (frames.json): total,
- * largura/altura (desktop) e o padrão dos arquivos. Nada fixo no código — ao
- * trocar o pacote, basta substituir a pasta frames/. As dimensões do mobile
- * (retrato) são lidas do próprio quadro carregado.
+ * Configuração dos quadros vem do próprio pacote: frames.json (desktop e
+ * mobile paisagem) e frames-retrato.json (celular em pé). Nada fixo no código
+ * — ao trocar o pacote, basta substituir os arquivos. As dimensões do mobile
+ * paisagem são lidas do próprio quadro carregado.
  */
 const FRAMES_JSON = "/cine/assets/frames/frames.json";
+const FRAMES_RETRATO_JSON = "/cine/assets/frames/frames-retrato.json";
+type Conjunto = "desktop" | "mobile" | "retrato";
 interface FramesConfig {
   total: number;
   largura: number;
@@ -60,11 +64,25 @@ interface FramesConfig {
    */
   util?: Partial<Record<"desktop" | "mobile", { y: number; h: number }>>;
 }
-const frameUrl = (cfg: FramesConfig, set: "desktop" | "mobile", n: number) =>
-  `/cine/${cfg[set].replace("{n}", String(n).padStart(4, "0"))}`;
-
-/** Logo 3D da Boder (mesma arte de /cine/assets/logo.png), em WebP leve. */
-const METEORO_URL = "/cine/assets/logo-3d-meteoro.webp";
+interface RetratoConfig {
+  total: number;
+  largura: number;
+  altura: number;
+  mobileRetrato: string;
+}
+/** O que o player precisa de um conjunto de quadros, já resolvido. */
+interface InfoConjunto {
+  total: number;
+  /** Padrão do arquivo, relativo a /cine/ (com {n}). */
+  padrao: string;
+  /** Dimensões da fonte (0 = lidas do 1º quadro). */
+  w: number;
+  h: number;
+  util?: { y: number; h: number };
+  /** true = quadro inteiro, tamanho natural, "contain" (filme vertical). */
+  inteiro: boolean;
+}
+const frameUrl = (padrao: string, n: number) => `/cine/${padrao.replace("{n}", String(n).padStart(4, "0"))}`;
 
 /** Faixas de progresso (0–1) em que cada painel aparece — iguais ao pacote. */
 const MOMENTS = [
@@ -86,14 +104,6 @@ const SUAVE_ASSENTA = 0.14;
 
 /** Janela pré-decodificada em tempo ocioso, em volta do quadro atual. */
 const VIZINHOS = 8;
-
-/** Partículas sugadas pela logo: ângulo de partida, raio (× diâmetro), duração, atraso. */
-const SUGADAS = Array.from({ length: 18 }, (_, i) => ({
-  a: Math.round((i * 360) / 18 + (i % 3) * 11),
-  r: (0.95 + ((i * 37) % 10) / 14).toFixed(2),
-  dur: (2.6 + ((i * 53) % 9) / 6).toFixed(2),
-  atraso: (-((i * 71) % 40) / 10).toFixed(1),
-}));
 
 const FONTS_HREF =
   "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap";
@@ -119,7 +129,6 @@ export const CineOpening = () => {
   const wordmarkRef = useRef<HTMLDivElement>(null);
   const slotRef = useRef<HTMLSpanElement>(null);
   const logoFlatRef = useRef<HTMLImageElement>(null);
-  const meteoroRef = useRef<HTMLDivElement>(null);
 
   useCineFonts();
 
@@ -132,9 +141,11 @@ export const CineOpening = () => {
 
     const reduzir = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const celularMql = window.matchMedia(MOBILE_QUERY);
-    let set: "desktop" | "mobile" = celularMql.matches ? "mobile" : "desktop";
-    let cfg: FramesConfig | null = null;
-    let total = 0; // conhecido quando o frames.json chega
+    const retratoMql = window.matchMedia(RETRATO_QUERY);
+    const escolher = (): Conjunto => (retratoMql.matches ? "retrato" : celularMql.matches ? "mobile" : "desktop");
+    let set: Conjunto = escolher();
+    let info: InfoConjunto | null = null;
+    let total = 0; // conhecido quando o json do conjunto chega
     // Dimensões do quadro do conjunto atual (desktop: frames.json; mobile:
     // lidas do 1º quadro carregado). 0 = ainda desconhecidas.
     let fonte = { w: 0, h: 0 };
@@ -182,15 +193,26 @@ export const CineOpening = () => {
      */
     /** Área útil do quadro (sem as faixas pretas, se o frames.json as declarar). */
     const util = () => {
-      const u = cfg?.util?.[set];
+      const u = info?.util;
       return u && u.h > 0 && u.y >= 0 && u.y + u.h <= fonte.h ? u : { y: 0, h: fonte.h };
     };
-    /** Dimensões que o splash usa para posicionar o meteoro (área útil). */
-    const quadroUtil = () => ({ w: fonte.w, h: fonte.w && fonte.h ? util().h : 0 });
 
     const dimensionarCanvas = () => {
       const { w, h } = tamanho;
       if (!w || !h || !fonte.w || !fonte.h) return;
+      // Filme vertical (celular em pé): quadro inteiro, no tamanho natural; o
+      // CSS (object-fit: contain) encaixa sem recorte nem ampliação.
+      canvas.classList.toggle("is-inteiro", !!info?.inteiro);
+      if (info?.inteiro) {
+        recorte = { x: 0, y: 0, w: fonte.w, h: fonte.h };
+        if (canvas.width !== fonte.w || canvas.height !== fonte.h) {
+          canvas.width = fonte.w;
+          canvas.height = fonte.h;
+          ctx.imageSmoothingQuality = "high";
+        }
+        desenhado = -1;
+        return;
+      }
       const u = util();
       const s = Math.max(w / fonte.w, h / u.h);
       const rw = Math.min(fonte.w, w / s);
@@ -245,15 +267,13 @@ export const CineOpening = () => {
         if (img.naturalWidth !== fonte.w || img.naturalHeight !== fonte.h) {
           fonte = { w: img.naturalWidth, h: img.naturalHeight };
           dimensionarCanvas();
-          splash?.medir(quadroUtil(), set);
-          splash?.atualizar(atual);
         }
         // Só redesenha se este quadro é melhor que o que está na tela
         const alvoIdx = indice(atual);
         if (desenhado < 0 || Math.abs(i - alvoIdx) < Math.abs(desenhado - alvoIdx)) desenhar(alvoIdx, true);
         if (Math.abs(i - alvoIdx) <= VIZINHOS) agendarDecode();
       };
-      img.src = frameUrl(cfg!, set, i + 1);
+      img.src = frameUrl(info!.padrao, i + 1);
     };
 
     /** Um lote de 6 pedidos; o próximo sai 40 ms depois, até esvaziar a fila. */
@@ -294,13 +314,14 @@ export const CineOpening = () => {
       decodeId = 0;
     };
 
-    const iniciarQuadros = () => {
-      if (!cfg) return;
+    const iniciarQuadros = (novo: InfoConjunto) => {
+      info = novo;
+      total = Math.max(1, Math.floor(novo.total));
       geracao++;
       if (loteId) window.clearTimeout(loteId);
       loteId = 0;
       cancelarDecode();
-      fonte = set === "desktop" ? { w: cfg.largura, h: cfg.altura } : { w: 0, h: 0 };
+      fonte = { w: novo.w, h: novo.h };
       quadros = new Array(total).fill(null);
       prontos = new Array(total).fill(false);
       decodificados = new Array(total).fill(false);
@@ -312,15 +333,44 @@ export const CineOpening = () => {
       lote();
     };
 
-    // ── Splash (wordmark que vira header + meteoro) ─────────────────────
+    // ── Configuração dos conjuntos (json lido uma vez, sob demanda) ─────
+    const jsons = new Map<string, Promise<unknown>>();
+    const lerJson = (url: string) => {
+      if (!jsons.has(url))
+        jsons.set(
+          url,
+          fetch(url).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`${url}: HTTP ${r.status}`)))),
+        );
+      return jsons.get(url)!;
+    };
+    const carregarConjunto = async (c: Conjunto): Promise<InfoConjunto> => {
+      if (c === "retrato") {
+        const j = (await lerJson(FRAMES_RETRATO_JSON)) as RetratoConfig;
+        return { total: j.total, padrao: j.mobileRetrato, w: j.largura, h: j.altura, inteiro: true };
+      }
+      const j = (await lerJson(FRAMES_JSON)) as FramesConfig;
+      return c === "desktop"
+        ? { total: j.total, padrao: j.desktop, w: j.largura, h: j.altura, util: j.util?.desktop, inteiro: false }
+        : { total: j.total, padrao: j.mobile, w: 0, h: 0, util: j.util?.mobile, inteiro: false };
+    };
+    /** Troca para o conjunto `c` (ignora a resposta se a tela mudou de novo). */
+    const usarConjunto = (c: Conjunto) =>
+      carregarConjunto(c)
+        .then((novo) => {
+          if (disposed || c !== set) return;
+          iniciarQuadros(novo);
+          ajustar(true);
+        })
+        .catch((erro) => console.warn("Abertura: não foi possível ler os quadros.", erro));
+
+    // ── Splash (wordmark que vira header) ────────────────────────────────
     const splash =
-      wordmarkRef.current && slotRef.current && logoFlatRef.current && meteoroRef.current
+      wordmarkRef.current && slotRef.current && logoFlatRef.current
         ? criarSplash({
             palco,
             wordmark: wordmarkRef.current,
             slot: slotRef.current,
             logoFlat: logoFlatRef.current,
-            meteoro: meteoroRef.current,
           })
         : null;
 
@@ -431,17 +481,16 @@ export const CineOpening = () => {
       tamanho = { w, h };
       dimensionarCanvas();
       if (total) desenhar(indice(atual), true);
-      splash?.medir(quadroUtil(), set);
+      splash?.medir();
       splash?.atualizar(atual);
     };
     const aoRedimensionar = () => ajustar();
 
     const aoMudarTela = () => {
-      const novo = celularMql.matches ? "mobile" : "desktop";
+      const novo = escolher();
       if (novo !== set) {
         set = novo;
-        iniciarQuadros();
-        ajustar(true);
+        void usarConjunto(novo);
       }
     };
 
@@ -466,23 +515,15 @@ export const CineOpening = () => {
     atual = alvo = reduzir ? 0 : progresso();
     ajustar(true);
     atualizarMomentos(atual);
-    // Lê a configuração do pacote de quadros e só então começa a carregá-los.
-    fetch(FRAMES_JSON)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`frames.json: HTTP ${r.status}`))))
-      .then((json: FramesConfig) => {
-        if (disposed) return;
-        cfg = json;
-        total = Math.max(1, Math.floor(json.total));
-        iniciarQuadros();
-        ajustar(true);
-      })
-      .catch((erro) => console.warn("Abertura: não foi possível ler os quadros.", erro));
+    // Lê a configuração do conjunto desta tela e só então começa a carregá-lo.
+    void usarConjunto(set);
     // As fontes (Manrope 800 do wordmark) mudam a largura do texto: remede.
     void document.fonts?.ready.then(() => !disposed && ajustar(true));
     io.observe(section);
     if (!reduzir) window.addEventListener("scroll", acordar, { passive: true });
     window.addEventListener("resize", aoRedimensionar);
     celularMql.addEventListener("change", aoMudarTela);
+    retratoMql.addEventListener("change", aoMudarTela);
 
     return () => {
       disposed = true;
@@ -496,6 +537,7 @@ export const CineOpening = () => {
       window.removeEventListener("scroll", acordar);
       window.removeEventListener("resize", aoRedimensionar);
       celularMql.removeEventListener("change", aoMudarTela);
+      retratoMql.removeEventListener("change", aoMudarTela);
     };
   }, []);
 
@@ -511,30 +553,6 @@ export const CineOpening = () => {
           {/* Astronauta "respirando" no repouso: só CSS na camada do canvas */}
           <div className="cine-respira">
             <canvas ref={canvasRef} className="cine-canvas" aria-hidden="true" />
-          </div>
-
-          {/* Meteoro: a logo 3D como fonte de luz e de atração da cena */}
-          <div ref={meteoroRef} className="cine-meteoro" aria-hidden="true">
-            <div className="cine-meteoro__feixe" />
-            <div className="cine-meteoro__brilho" />
-            <div className="cine-meteoro__anel" />
-            <img src={METEORO_URL} alt="" className="cine-meteoro__logo" decoding="async" />
-            <div className="cine-meteoro__nucleo" />
-            <div className="cine-meteoro__sugadas">
-              {SUGADAS.map((s, i) => (
-                <i
-                  key={i}
-                  style={
-                    {
-                      "--a": `${s.a}deg`,
-                      "--r": s.r,
-                      animationDuration: `${s.dur}s`,
-                      animationDelay: `${s.atraso}s`,
-                    } as CSSProperties
-                  }
-                />
-              ))}
-            </div>
           </div>
 
           <div className="cine-poeira" aria-hidden="true">

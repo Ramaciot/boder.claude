@@ -1,36 +1,18 @@
 /**
  * Splash da abertura (molde "Lusion"):
  *
- *  1. Wordmark BODER SPACE gigante na base da tela que, ao rolar, voa (FLIP:
- *     translação + escala da MESMA peça) até o canto superior esquerdo e vira
- *     a marca do cabeçalho, ao lado da logo flat. Voltando ao topo, o inverso.
- *  2. Meteoro: a logo 3D da Boder é a FONTE da cena — fica no portal do filme,
- *     com o brilho emanando dela, o anel do portal abraçando-a, o feixe
- *     nascendo nela e partículas sendo sugadas em sua direção.
+ * Wordmark BODER SPACE gigante na base da tela que, ao rolar, voa (FLIP:
+ * translação + escala da MESMA peça) até o canto superior esquerdo e vira a
+ * marca do cabeçalho, ao lado da logo flat. Voltando ao topo, o inverso.
  *
- * Custo quase zero: tudo o que se move sozinho (brilho, anel, partículas,
- * balanço da logo) é animação CSS de transform/opacity. Este módulo só
- * posiciona as camadas (medir) e, durante a rolagem, aplica o voo do nome e a
- * saída do meteoro (atualizar) — chamado pelo loop da abertura, que só roda
+ * A logo-meteoro 3D vem dentro do próprio filme, então não há sobreposição.
+ * Custo quase zero: este módulo só mede (medir) e, durante a rolagem, aplica
+ * o voo do nome (atualizar) — chamado pelo loop da abertura, que só roda
  * enquanto há scroll a acompanhar.
  */
 
-/**
- * Onde está o portal no filme, em frações do quadro (x/y do centro,
- * diâmetro do anel em fração da ALTURA, e a altura do astronauta). Isto
- * descreve o enquadramento do filme — por isso é por conjunto — e é aplicado
- * sobre a área útil do quadro (sem as faixas pretas declaradas no frames.json).
- * Filme Veo 1080p: desktop e mobile têm o mesmo enquadramento (o mobile é o
- * mesmo quadro em escala), então os valores coincidem.
- */
-const PORTAL = {
-  desktop: { x: 0.511, y: 0.31, diametro: 0.38, astronautaY: 0.75 },
-  mobile: { x: 0.511, y: 0.31, diametro: 0.38, astronautaY: 0.75 },
-} as const;
-
 /** Trechos do progresso (0–1) da abertura. */
 const VOO_FIM = 0.11; // wordmark chega ao cabeçalho
-const METEORO_SAI = [0.02, 0.13] as const; // câmera "passa" pelo portal
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const suave = (a: number, b: number, v: number) => {
@@ -44,24 +26,16 @@ export interface SplashRefs {
   wordmark: HTMLElement;
   slot: HTMLElement;
   logoFlat: HTMLElement;
-  /** Grupo do meteoro; as camadas internas são posicionadas por variáveis CSS. */
-  meteoro: HTMLElement;
 }
 
 export const criarSplash = (refs: SplashRefs) => {
-  const { palco, wordmark, slot, logoFlat, meteoro } = refs;
+  const { palco, wordmark, slot, logoFlat } = refs;
   let voo = { dx: 0, dy: 0, escala: 1 };
   let ultimoT = -1;
-  let ultimoMeteoro = -1;
 
-  /**
-   * Mede tudo: tamanho do wordmark, destino no cabeçalho e posição do portal.
-   * `quadro` = dimensões do quadro do conjunto atual (0 = ainda desconhecidas:
-   * o meteoro espera o 1º quadro para se posicionar).
-   */
-  const medir = (quadro: { w: number; h: number }, conjunto: "desktop" | "mobile") => {
+  /** Mede o tamanho do wordmark e o destino dele no cabeçalho. */
+  const medir = () => {
     const W = palco.clientWidth;
-    const H = palco.clientHeight;
 
     // 1) Wordmark: ocupa a largura útil da tela, na base.
     wordmark.style.transform = "none";
@@ -77,27 +51,7 @@ export const criarSplash = (refs: SplashRefs) => {
       dy: destino.top - grande.top,
     };
 
-    // 2) Portal no filme (object-fit: cover, igual ao canvas dos quadros).
     ultimoT = -1;
-    ultimoMeteoro = -1;
-    if (!quadro.w || !quadro.h) {
-      meteoro.classList.add("is-sem-medida");
-      return;
-    }
-    meteoro.classList.remove("is-sem-medida");
-    const portal = PORTAL[conjunto];
-    const s = Math.max(W / quadro.w, H / quadro.h);
-    const ox = (W - quadro.w * s) / 2;
-    const oy = (H - quadro.h * s) / 2;
-    const d = portal.diametro * quadro.h * s;
-    const cx = ox + portal.x * quadro.w * s;
-    const cy = oy + portal.y * quadro.h * s;
-    const astronautaY = oy + portal.astronautaY * quadro.h * s;
-    meteoro.style.setProperty("--cx", `${cx.toFixed(1)}px`);
-    meteoro.style.setProperty("--cy", `${cy.toFixed(1)}px`);
-    meteoro.style.setProperty("--d", `${d.toFixed(1)}px`);
-    meteoro.style.setProperty("--feixe", `${Math.max(0, astronautaY - cy).toFixed(1)}px`);
-    meteoro.style.transformOrigin = `${cx.toFixed(1)}px ${cy.toFixed(1)}px`;
   };
 
   /** Aplica o estado do splash para o progresso `p` (0–1, suavizado). */
@@ -113,18 +67,6 @@ export const criarSplash = (refs: SplashRefs) => {
       logoFlat.style.transform = `scale(${(0.7 + 0.3 * chegada).toFixed(3)})`;
       // Splash "limpo": o botão do chat só aparece depois que o nome sai da base
       document.documentElement.toggleAttribute("data-cine-splash", t < 0.5);
-    }
-
-    // Meteoro: cheio no splash; a câmera "atravessa" o portal ao rolar
-    const k = suave(METEORO_SAI[0], METEORO_SAI[1], p);
-    if (Math.abs(k - ultimoMeteoro) > 0.001) {
-      ultimoMeteoro = k;
-      meteoro.style.opacity = String(1 - k);
-      meteoro.style.transform = `scale(${(1 + 0.55 * k).toFixed(3)})`;
-      // Fora de vista: some do render e as animações dele ficam pausadas
-      const fora = k >= 0.999;
-      meteoro.style.visibility = fora ? "hidden" : "visible";
-      meteoro.classList.toggle("is-fora", fora);
     }
   };
 
