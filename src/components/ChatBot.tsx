@@ -319,7 +319,7 @@ const ChatBot = () => {
   return (
     <>
       {/* Botão flutuante */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="chat-flutuante fixed bottom-6 right-6 z-50">
         <button
           onClick={toggleChatBot}
           className={`h-14 w-14 rounded-2xl shadow-xl flex items-center justify-center text-primary-foreground transition-all duration-350 hover:scale-110 active:scale-95 ${

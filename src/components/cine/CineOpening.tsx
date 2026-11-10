@@ -1,11 +1,20 @@
 import { useEffect, useRef, type CSSProperties, type MouseEvent } from "react";
 import { useMeetingForm } from "@/contexts/MeetingFormContext";
-// Logo oficial (flat). A versão 3D do pacote fica reservada para a cena.
+// Logo oficial (flat) = marca do cabeçalho. A logo 3D é elemento da CENA
+// (o meteoro no portal), nunca logo de interface.
 import cineLogo from "@/assets/boder-logo.webp";
+import { criarSplash } from "./cineSplash";
 import "./cine.css";
+
+/** Logo 3D da Boder (mesma arte de /cine/assets/logo.png), em WebP leve. */
+const METEORO_URL = "/cine/assets/logo-3d-meteoro.webp";
 
 /**
  * Abertura cinematográfica da home (pacote "boder-cine-v2").
+ *
+ * Splash no molde da Lusion (ver cineSplash.ts): BODER SPACE gigante na base,
+ * que voa até o cabeçalho ao rolar; logo 3D como meteoro no portal, com
+ * partículas girando e o feixe saindo dela.
  *
  * Seção alta (460vh) com palco fixo: os 160 quadros do filme são desenhados
  * num canvas conforme o progresso da rolagem dentro da seção. Por cima, o
@@ -52,7 +61,7 @@ const MOMENTS = [
 ] as const;
 
 const FONTS_HREF =
-  "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap";
+  "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap";
 
 const useCineFonts = () => {
   useEffect(() => {
@@ -72,6 +81,15 @@ export const CineOpening = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
   const momentRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const wordmarkRef = useRef<HTMLDivElement>(null);
+  const slotRef = useRef<HTMLSpanElement>(null);
+  const logoFlatRef = useRef<HTMLImageElement>(null);
+  const meteoroRef = useRef<HTMLDivElement>(null);
+  const logo3dRef = useRef<HTMLImageElement>(null);
+  const brilhoRef = useRef<HTMLDivElement>(null);
+  const feixeRef = useRef<HTMLDivElement>(null);
+  const atrasRef = useRef<HTMLCanvasElement>(null);
+  const frenteRef = useRef<HTMLCanvasElement>(null);
 
   useCineFonts();
 
@@ -167,11 +185,19 @@ export const CineOpening = () => {
         momentRefs.current[i]?.classList.toggle("ativo", p >= m.from && (p < m.to || (m.to >= 1 && p >= 1)));
       });
       section.classList.toggle("andou", p > 0.02);
-      const sair = titleRef.current;
-      if (sair) {
-        const q = Math.min(1, p / 0.16);
-        sair.style.transform = `translateY(${(-46 * q).toFixed(1)}vh)`;
-        sair.style.opacity = String(1 - q * q);
+      // Título editorial: entra depois que o wordmark voou para o cabeçalho
+      // e sai antes do primeiro painel.
+      const titulo = titleRef.current;
+      if (titulo) {
+        const faixa = (a: number, b: number) => {
+          const t = Math.min(1, Math.max(0, (p - a) / (b - a)));
+          return t * t * (3 - 2 * t);
+        };
+        const entra = faixa(0.085, 0.145);
+        const sai = faixa(0.21, 0.28);
+        titulo.style.transform = `translateY(${((1 - entra) * 6 - sai * 34).toFixed(2)}vh)`;
+        titulo.style.opacity = String(entra * (1 - sai * sai));
+        titulo.style.filter = entra < 1 ? `blur(${((1 - entra) * 8).toFixed(1)}px)` : "none";
       }
     };
 
@@ -213,6 +239,27 @@ export const CineOpening = () => {
       video.load();
     }
 
+    // ── Splash (wordmark que vira header + meteoro) ──────────────────────
+    const splash =
+      wordmarkRef.current && slotRef.current && logoFlatRef.current && meteoroRef.current && logo3dRef.current &&
+      brilhoRef.current && feixeRef.current && atrasRef.current && frenteRef.current
+        ? criarSplash(
+            {
+              palco: canvas.parentElement!.parentElement!,
+              wordmark: wordmarkRef.current,
+              slot: slotRef.current,
+              logoFlat: logoFlatRef.current,
+              meteoro: meteoroRef.current,
+              logo3d: logo3dRef.current,
+              brilho: brilhoRef.current,
+              feixe: feixeRef.current,
+              atras: atrasRef.current,
+              frente: frenteRef.current,
+            },
+            reduzir,
+          )
+        : null;
+
     // ── Loop contínuo (sem pausa): scrub do pacote + respiração + vídeo ───
     const quadro = (agora: number) => {
       // Contínuo enquanto a abertura está na tela; fora dela, o loop para
@@ -237,6 +284,7 @@ export const CineOpening = () => {
       desenhar(idx);
 
       atualizarMomentos(p);
+      splash?.atualizar(p, agora);
       definirVideo(videoOk && !rolando && p <= TOPO);
 
       // Dissolve final: 0 → 1 com ease, aplicado via variável CSS.
@@ -257,6 +305,8 @@ export const CineOpening = () => {
       canvas.height = Math.round(canvas.clientHeight * dpr);
       desenhado = -1;
       desenhar(Math.round(atual), true);
+      splash?.medir();
+      splash?.atualizar(atual / (total - 1), performance.now());
     };
 
     const aoMudarTela = () => {
@@ -283,6 +333,8 @@ export const CineOpening = () => {
 
     carregarTudo();
     ajustar();
+    // As fontes (Manrope 800 do wordmark) mudam a largura do texto: remede.
+    void document.fonts?.ready.then(() => !disposed && ajustar());
     if (reduzir) atualizarMomentos(0);
     else {
       atual = alvo = progresso() * (total - 1);
@@ -301,6 +353,7 @@ export const CineOpening = () => {
       video?.pause();
       io.disconnect();
       document.documentElement.removeAttribute("data-cine-ativa");
+      document.documentElement.removeAttribute("data-cine-splash");
       window.removeEventListener("scroll", marcarScroll);
       window.removeEventListener("resize", ajustar);
       celularMql.removeEventListener("change", aoMudarTela);
@@ -327,6 +380,14 @@ export const CineOpening = () => {
             disablePictureInPicture
             aria-hidden="true"
           />
+          {/* Meteoro: logo 3D no portal, com brilho, anel de partículas e feixe */}
+          <div ref={meteoroRef} className="cine-meteoro" aria-hidden="true">
+            <div ref={brilhoRef} className="cine-meteoro__brilho" />
+            <div ref={feixeRef} className="cine-meteoro__feixe" />
+            <canvas ref={atrasRef} className="cine-meteoro__particulas" />
+            <img ref={logo3dRef} src={METEORO_URL} alt="" className="cine-meteoro__logo" decoding="async" />
+            <canvas ref={frenteRef} className="cine-meteoro__particulas" />
+          </div>
           <div className="cine-poeira" aria-hidden="true">
             <span />
             <span />
@@ -337,8 +398,11 @@ export const CineOpening = () => {
 
         <header className="cine-topo">
           <a href="#inicio" className="cine-marca" aria-label="Boder Space" onClick={goTo("inicio")}>
-            <img src={cineLogo} alt="Boder Space" className="cine-marca-logo" width={40} height={40} />
-            <span className="cine-marca-texto">Boder Space</span>
+            <img ref={logoFlatRef} src={cineLogo} alt="" className="cine-marca-logo" width={40} height={40} />
+            {/* Lugar onde o wordmark pousa (a peça que voa fica fora do header) */}
+            <span ref={slotRef} className="cine-marca-slot" aria-hidden="true">
+              BODER SPACE
+            </span>
           </a>
           <nav className="cine-menu" aria-label="Seções">
             <a href="#servicos" onClick={goTo("servicos")}>Serviços</a>
@@ -348,6 +412,11 @@ export const CineOpening = () => {
             </button>
           </nav>
         </header>
+
+        {/* Wordmark do splash: a MESMA peça voa da base até o cabeçalho */}
+        <div ref={wordmarkRef} className="cine-wordmark" aria-hidden="true">
+          BODER SPACE
+        </div>
 
         <div ref={titleRef} className="cine-titulo-sair">
           <h1>

@@ -181,12 +181,48 @@
   height: 40px;
   width: 40px;
 }
-/* Wordmark com a mesma fonte do header do site (pilha "sans" do Tailwind) */
-.cine-marca-texto {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Inter, system-ui, sans-serif;
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+/* ── Marca: sans geométrica pesada (Manrope 800), nunca serifada ────────── */
+.cine-abertura {
+  --fonte-marca: "Manrope", "Archivo", -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui, sans-serif;
+}
+/* Lugar do wordmark no cabeçalho: invisível, só dá a medida/posição final */
+.cine-marca-slot {
+  font-family: var(--fonte-marca);
+  font-weight: 800;
+  font-size: 19px;
+  line-height: 0.82;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  visibility: hidden;
+}
+@media (max-width: 760px) {
+  .cine-marca-slot {
+    font-size: 16px;
+  }
+}
+.cine-marca-logo {
+  transition: none;
+}
+
+/* Wordmark do splash — a mesma peça que pousa no cabeçalho (FLIP via JS) */
+.cine-wordmark {
+  position: absolute;
+  z-index: 11;
+  left: var(--gutter);
+  bottom: clamp(14px, 3.2vh, 40px);
+  font-family: var(--fonte-marca);
+  font-weight: 800;
+  font-size: 15vw; /* o JS ajusta para ocupar a largura exata */
+  line-height: 0.82;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--texto);
+  transform-origin: 0 0;
+  pointer-events: none;
+  opacity: calc(1 - var(--saida));
+  text-shadow: 0 0 60px rgb(23 201 173 / 0.18);
 }
 .cine-menu {
   display: flex;
@@ -222,8 +258,69 @@
   }
 }
 
+/* ── Meteoro: logo 3D da Boder no portal do filme ─────────────────────── */
+.cine-meteoro {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.cine-meteoro__brilho,
+.cine-meteoro__logo {
+  position: absolute;
+  translate: -50% -50%;
+}
+.cine-meteoro__brilho {
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgb(23 201 173 / 0.42) 0%, rgb(16 185 129 / 0.16) 32%, transparent 64%);
+  mix-blend-mode: screen;
+  animation: cine-meteoro-pulso 3.2s ease-in-out infinite;
+}
+.cine-meteoro__logo {
+  width: auto;
+  max-width: none;
+  /* fundo quase preto da arte some no blend; a máscara apaga as bordas */
+  mix-blend-mode: screen;
+  -webkit-mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
+          mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
+  filter: drop-shadow(0 0 18px rgb(23 201 173 / 0.55)) saturate(1.15);
+  animation: cine-meteoro-gira 11s ease-in-out infinite;
+}
+.cine-meteoro__particulas {
+  position: absolute;
+  mix-blend-mode: screen;
+}
+.cine-meteoro__feixe {
+  position: absolute;
+  width: 22px;
+  translate: -50% 0;
+  border-radius: 9999px;
+  background: linear-gradient(to bottom, rgb(220 255 245 / 0.55), rgb(23 201 173 / 0.32) 35%, rgb(16 185 129 / 0.1) 80%, transparent);
+  filter: blur(6px);
+  mix-blend-mode: screen;
+  animation: cine-feixe-pulso 2.4s ease-in-out infinite;
+}
+/* Gira devagar no próprio eixo (balanço 3D) e flutua — uma imagem plana dando
+   a volta inteira mostraria o verso espelhado, por isso o balanço amplo. */
+@keyframes cine-meteoro-gira {
+  0% { transform: perspective(900px) rotateY(-28deg) rotateZ(-4deg) translateY(0) scale(1); }
+  25% { transform: perspective(900px) rotateY(0deg) rotateZ(0deg) translateY(-6px) scale(1.03); }
+  50% { transform: perspective(900px) rotateY(28deg) rotateZ(4deg) translateY(0) scale(1); }
+  75% { transform: perspective(900px) rotateY(0deg) rotateZ(0deg) translateY(6px) scale(0.98); }
+  100% { transform: perspective(900px) rotateY(-28deg) rotateZ(-4deg) translateY(0) scale(1); }
+}
+@keyframes cine-meteoro-pulso {
+  0%, 100% { opacity: 0.75; transform: scale(0.92); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+@keyframes cine-feixe-pulso {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.95; }
+}
+
 /* ── Título que sai da tela ───────────────────────────────────────────── */
 .cine-titulo-sair {
+  opacity: 0; /* entra depois que o wordmark voou (JS) */
   position: absolute;
   z-index: 6;
   left: var(--gutter);
@@ -392,6 +489,11 @@
   .cine-video {
     display: none;
   }
+  .cine-meteoro__logo,
+  .cine-meteoro__brilho,
+  .cine-meteoro__feixe {
+    animation: none !important;
+  }
 }
 
 /* O header fixo do site some enquanto a abertura (que tem o próprio header)
@@ -400,4 +502,16 @@ html[data-cine-ativa] .site-header-slot > header {
   opacity: 0;
   transform: translateY(-100%);
   pointer-events: none;
+}
+
+/* Durante o splash o botão do chat fica oculto (não cobre o wordmark) */
+html[data-cine-splash] .chat-flutuante {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px);
+}
+.chat-flutuante {
+  transition:
+    opacity 0.4s,
+    transform 0.4s;
 }
