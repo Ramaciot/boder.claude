@@ -10,12 +10,28 @@ import "./cine.css";
  * header da abertura, o título que sai da tela e os painéis de vidro que
  * entram em sincronia com os quadros (faixas data-de/data-ate do pacote).
  *
- * A lógica segue o app.js do pacote (carga em passadas, suavização 0.18,
- * título saindo em 16% do progresso). Única diferença: o loop de animação
- * pausa quando o quadro alcança a rolagem, em vez de rodar sem parar.
+ * A lógica do scrub segue o app.js do pacote (carga em passadas, suavização
+ * 0.18, título saindo em 16% do progresso).
+ *
+ * Movimento constante (requisito): a cena nunca fica parada.
+ *  - No topo da abertura, sem rolagem ativa, o abertura-loop.mp4 toca em loop
+ *    por cima do canvas; ao rolar, crossfade para os quadros; voltando ao
+ *    topo e parando, o vídeo reassume.
+ *  - Parado no meio da abertura, os quadros "respiram" (oscilam alguns quadros
+ *    em torno do ponto atual) em vez de congelar.
+ *  - Poeira flutuando em CSS por cima de tudo, o tempo todo.
+ *  - O loop de animação roda sem pausa enquanto a abertura existe.
  */
 
 const TOTAL_FRAMES = 160;
+const VIDEO_URL = "/cine/assets/abertura-loop.mp4";
+/** Até este progresso (0–1) a cena é "o topo", onde o vídeo em loop assume. */
+const TOPO = 0.03;
+/** Sem evento de scroll por este tempo = rolagem não está ativa. */
+const OCIOSO_MS = 220;
+/** Amplitude (em quadros) e período da "respiração" quando parado no meio. */
+const DERIVA_QUADROS = 3;
+const DERIVA_PERIODO_MS = 4200;
 const MOBILE_QUERY = "(max-width: 760px)"; // mesmo corte do app.js do pacote
 const frameUrl = (set: "desktop" | "mobile", n: number) =>
   `/cine/assets/frames/${set}/f_${String(n).padStart(4, "0")}.webp`;
@@ -44,6 +60,7 @@ export const CineOpening = () => {
   const { openMeetingForm } = useMeetingForm();
   const sectionRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
   const momentRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -67,6 +84,13 @@ export const CineOpening = () => {
     let raf = 0;
     let loteTimer = 0;
     let disposed = false;
+    let ultimoScroll = 0;
+    let deriva = 0; // amplitude atual da respiração (sobe/desce suave)
+    let visivel = true;
+    let videoOk = false;
+    let mostrandoVideo = false;
+    let pausaVideoTimer = 0;
+    const video = videoRef.current;
 
     const pronto = (i: number) => {
       const img = quadros[i];
@@ -141,19 +165,67 @@ export const CineOpening = () => {
       }
     };
 
-    // Igual ao loop do pacote (suavização 0.18), mas pausa quando o quadro
-    // alcança a rolagem e volta no próximo scroll — nada roda com a página parada.
-    const quadro = () => {
-      raf = 0;
+    // ── Vídeo em loop (camada do topo) ──────────────────────────────────
+    const tocarVideo = () => {
+      if (!video) return;
+      window.clearTimeout(pausaVideoTimer);
+      void video.play().catch(() => {
+        // Autoplay recusado: fica no canvas, que também se move.
+        videoOk = false;
+        definirVideo(false);
+      });
+    };
+    const definirVideo = (ligar: boolean) => {
+      if (ligar === mostrandoVideo) return;
+      mostrandoVideo = ligar;
+      section.classList.toggle("com-video", ligar);
+      if (ligar) tocarVideo();
+      else if (video) {
+        // Pausa depois do crossfade (economiza CPU enquanto escondido).
+        window.clearTimeout(pausaVideoTimer);
+        pausaVideoTimer = window.setTimeout(() => !mostrandoVideo && video.pause(), 800);
+      }
+    };
+    if (video && !reduzir) {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.setAttribute("muted", "");
+      const pronto = () => {
+        videoOk = true;
+      };
+      if (video.readyState >= 2) pronto();
+      video.addEventListener("loadeddata", pronto);
+      video.addEventListener("error", () => {
+        videoOk = false;
+        definirVideo(false);
+      });
+      video.src = VIDEO_URL;
+      video.load();
+    }
+
+    // ── Loop contínuo (sem pausa): scrub do pacote + respiração + vídeo ───
+    const quadro = (agora: number) => {
+      raf = requestAnimationFrame(quadro);
+      if (!visivel) return;
+
+      const rolando = agora - ultimoScroll < OCIOSO_MS;
       alvo = progresso() * (total - 1);
       atual += (alvo - atual) * 0.18; // suaviza: sensação de filme, não de slide
       if (Math.abs(alvo - atual) < 0.05) atual = alvo;
-      desenhar(Math.round(atual));
-      atualizarMomentos(atual / (total - 1));
-      if (atual !== alvo) raf = requestAnimationFrame(quadro);
+      const p = atual / (total - 1);
+
+      // Parado = a cena respira; rolando = scrub limpo.
+      const parado = !rolando && atual === alvo;
+      deriva += ((parado ? DERIVA_QUADROS : 0) - deriva) * 0.04;
+      const oscilacao = deriva * Math.sin((agora / DERIVA_PERIODO_MS) * Math.PI * 2);
+      const idx = Math.min(total - 1, Math.max(0, Math.round(atual + oscilacao)));
+      desenhar(idx);
+
+      atualizarMomentos(p);
+      definirVideo(videoOk && !rolando && p <= TOPO);
     };
-    const acordar = () => {
-      if (!reduzir && !raf) raf = requestAnimationFrame(quadro);
+    const marcarScroll = () => {
+      ultimoScroll = performance.now();
     };
 
     const ajustar = () => {
@@ -169,7 +241,6 @@ export const CineOpening = () => {
       if (novo !== set) {
         set = novo;
         carregarTudo();
-        acordar();
       }
     };
 
@@ -177,9 +248,11 @@ export const CineOpening = () => {
     // (a abertura tem o próprio header com a logo e a navegação).
     const io = new IntersectionObserver(
       ([entry]) => {
-        const visivel = entry.isIntersecting;
+        visivel = entry.isIntersecting;
         document.documentElement.toggleAttribute("data-cine-ativa", visivel);
         section.classList.toggle("em-cena", visivel);
+        if (!visivel && video) video.pause();
+        else if (visivel && mostrandoVideo) tocarVideo();
       },
       { rootMargin: "0px 0px -100% 0px" },
     );
@@ -189,20 +262,22 @@ export const CineOpening = () => {
     if (reduzir) atualizarMomentos(0);
     else {
       atual = alvo = progresso() * (total - 1);
-      acordar();
+      raf = requestAnimationFrame(quadro);
     }
     io.observe(section);
-    window.addEventListener("scroll", acordar, { passive: true });
+    window.addEventListener("scroll", marcarScroll, { passive: true });
     window.addEventListener("resize", ajustar);
     celularMql.addEventListener("change", aoMudarTela);
 
     return () => {
       disposed = true;
       window.clearTimeout(loteTimer);
+      window.clearTimeout(pausaVideoTimer);
       if (raf) cancelAnimationFrame(raf);
+      video?.pause();
       io.disconnect();
       document.documentElement.removeAttribute("data-cine-ativa");
-      window.removeEventListener("scroll", acordar);
+      window.removeEventListener("scroll", marcarScroll);
       window.removeEventListener("resize", ajustar);
       celularMql.removeEventListener("change", aoMudarTela);
     };
@@ -217,6 +292,21 @@ export const CineOpening = () => {
     <section id="inicio" ref={sectionRef} className="cine-abertura" style={{ "--altura": "460vh" } as CSSProperties}>
       <div className="cine-palco">
         <canvas ref={canvasRef} className="cine-canvas" aria-hidden="true" />
+        <video
+          ref={videoRef}
+          className="cine-video"
+          muted
+          loop
+          playsInline
+          preload="auto"
+          disablePictureInPicture
+          aria-hidden="true"
+        />
+        <div className="cine-poeira" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
         <div className="cine-vinheta" />
 
         <header className="cine-topo">

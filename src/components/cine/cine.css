@@ -58,6 +58,71 @@
   height: 100%;
   display: block;
 }
+/* Vídeo em loop do topo — crossfade com o canvas de quadros */
+.cine-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.7s var(--ease);
+  pointer-events: none;
+}
+.cine-abertura.com-video .cine-video {
+  opacity: 1;
+}
+
+/* Poeira flutuando — 3 camadas de pontos em CSS que só animam transform
+   (deslocamento de exatamente um ladrilho, então o loop é contínuo). */
+.cine-poeira {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  overflow: hidden;
+  pointer-events: none;
+}
+.cine-poeira span {
+  position: absolute;
+  inset: -260px;
+  will-change: transform;
+  animation: cine-poeira-a 34s linear infinite;
+  background-image:
+    radial-gradient(circle at 18px 36px, rgb(238 243 240 / 0.55) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 132px 92px, rgb(23 201 173 / 0.5) 0 1.2px, transparent 2px),
+    radial-gradient(circle at 76px 184px, rgb(238 243 240 / 0.35) 0 0.8px, transparent 1.6px),
+    radial-gradient(circle at 196px 150px, rgb(238 243 240 / 0.45) 0 1px, transparent 1.8px);
+  background-size: 220px 220px;
+}
+.cine-poeira span:nth-child(2) {
+  animation: cine-poeira-b 52s linear infinite;
+  opacity: 0.6;
+  background-size: 340px 340px;
+  filter: blur(0.6px);
+}
+.cine-poeira span:nth-child(3) {
+  animation:
+    cine-poeira-c 22s linear infinite,
+    cine-poeira-brilho 5s ease-in-out infinite alternate;
+  background-image:
+    radial-gradient(circle at 40px 60px, rgb(238 243 240 / 0.8) 0 1.4px, transparent 2.4px),
+    radial-gradient(circle at 250px 210px, rgb(23 201 173 / 0.7) 0 1.6px, transparent 2.6px);
+  background-size: 300px 300px;
+}
+@keyframes cine-poeira-a {
+  to { transform: translate3d(110px, -220px, 0); }
+}
+@keyframes cine-poeira-b {
+  to { transform: translate3d(-170px, -340px, 0); }
+}
+@keyframes cine-poeira-c {
+  to { transform: translate3d(150px, -300px, 0); }
+}
+@keyframes cine-poeira-brilho {
+  from { opacity: 0.35; }
+  to { opacity: 0.9; }
+}
+
 .cine-vinheta {
   position: absolute;
   inset: 0;
@@ -108,10 +173,12 @@
   width: auto;
   border-radius: 10px;
 }
+/* Wordmark com a mesma fonte do header do site (pilha "sans" do Tailwind) */
 .cine-marca-texto {
-  font-family: var(--fonte-titulo);
-  font-size: 22px;
-  letter-spacing: 0.02em;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Inter, system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 .cine-menu {
   display: flex;
@@ -313,7 +380,8 @@
     transition: none !important;
   }
   .cine-momento,
-  .cine-dica {
+  .cine-dica,
+  .cine-video {
     display: none;
   }
 }
