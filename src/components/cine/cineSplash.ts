@@ -18,13 +18,14 @@
 /**
  * Onde está o portal no filme, em frações do quadro (x/y do centro,
  * diâmetro do anel em fração da ALTURA, e a altura do astronauta). Isto
- * descreve o enquadramento do filme — por isso é por conjunto (o mobile é um
- * corte retrato) — e é aplicado sobre as dimensões reais do quadro, que vêm
- * do frames.json / da própria imagem.
+ * descreve o enquadramento do filme — por isso é por conjunto — e é aplicado
+ * sobre a área útil do quadro (sem as faixas pretas declaradas no frames.json).
+ * Filme Veo 1080p: desktop e mobile têm o mesmo enquadramento (o mobile é o
+ * mesmo quadro em escala), então os valores coincidem.
  */
 const PORTAL = {
-  desktop: { x: 0.52, y: 0.31, diametro: 0.38, astronautaY: 0.8 },
-  mobile: { x: 0.565, y: 0.29, diametro: 0.32, astronautaY: 0.8 },
+  desktop: { x: 0.511, y: 0.31, diametro: 0.38, astronautaY: 0.75 },
+  mobile: { x: 0.511, y: 0.31, diametro: 0.38, astronautaY: 0.75 },
 } as const;
 
 /** Trechos do progresso (0–1) da abertura. */

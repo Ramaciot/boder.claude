@@ -48,6 +48,12 @@ interface FramesConfig {
   altura: number;
   desktop: string;
   mobile: string;
+  /**
+   * Área útil de cada conjunto, em px da fonte (opcional): quando o filme vem
+   * com faixas pretas embutidas (letterbox), só essa faixa vertical entra no
+   * palco. Sem o campo, o quadro inteiro.
+   */
+  util?: Partial<Record<"desktop" | "mobile", { y: number; h: number }>>;
 }
 const frameUrl = (cfg: FramesConfig, set: "desktop" | "mobile", n: number) =>
   `/cine/${cfg[set].replace("{n}", String(n).padStart(4, "0"))}`;
@@ -158,13 +164,22 @@ export const CineOpening = () => {
      * quadro para o formato do palco — nunca maior que o quadro, e também não
      * maior que o palco × DPR (máx. 2), que seria só pixel desperdiçado.
      */
+    /** Área útil do quadro (sem as faixas pretas, se o frames.json as declarar). */
+    const util = () => {
+      const u = cfg?.util?.[set];
+      return u && u.h > 0 && u.y >= 0 && u.y + u.h <= fonte.h ? u : { y: 0, h: fonte.h };
+    };
+    /** Dimensões que o splash usa para posicionar o meteoro (área útil). */
+    const quadroUtil = () => ({ w: fonte.w, h: fonte.w && fonte.h ? util().h : 0 });
+
     const dimensionarCanvas = () => {
       const { w, h } = tamanho;
       if (!w || !h || !fonte.w || !fonte.h) return;
-      const s = Math.max(w / fonte.w, h / fonte.h);
+      const u = util();
+      const s = Math.max(w / fonte.w, h / u.h);
       const rw = Math.min(fonte.w, w / s);
-      const rh = Math.min(fonte.h, h / s);
-      recorte = { x: (fonte.w - rw) / 2, y: (fonte.h - rh) / 2, w: rw, h: rh };
+      const rh = Math.min(u.h, h / s);
+      recorte = { x: (fonte.w - rw) / 2, y: u.y + (u.h - rh) / 2, w: rw, h: rh };
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const k = Math.min(1, (w * dpr) / rw);
       const cw = Math.max(1, Math.round(rw * k));
@@ -214,7 +229,7 @@ export const CineOpening = () => {
         if (img.naturalWidth !== fonte.w || img.naturalHeight !== fonte.h) {
           fonte = { w: img.naturalWidth, h: img.naturalHeight };
           dimensionarCanvas();
-          splash?.medir(fonte, set);
+          splash?.medir(quadroUtil(), set);
           splash?.atualizar(atual);
         }
         // Só redesenha se este quadro é melhor que o que está na tela
@@ -360,7 +375,7 @@ export const CineOpening = () => {
       tamanho = { w, h };
       dimensionarCanvas();
       if (total) desenhar(indice(atual), true);
-      splash?.medir(fonte, set);
+      splash?.medir(quadroUtil(), set);
       splash?.atualizar(atual);
     };
     const aoRedimensionar = () => ajustar();
