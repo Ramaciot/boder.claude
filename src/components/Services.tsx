@@ -67,7 +67,7 @@ export const Services = () => {
                   data-reveal="card"
                   style={{ "--reveal-delay": `${(index % 3) * 110}ms` } as CSSProperties}
                   className={[
-                    "group relative flex flex-col justify-between rounded-2xl sm:rounded-3xl p-4 sm:p-6 xl:p-8 transition-all duration-300 cursor-pointer backdrop-blur-xl",
+                    "group relative flex flex-col justify-between rounded-2xl sm:rounded-3xl p-4 sm:p-6 xl:p-8 transition-all duration-300 cursor-pointer md:backdrop-blur-xl",
                     "hover:bg-foreground/[0.08] hover:border-foreground/30 hover:scale-[1.02] hover:z-10",
                     highlighted
                       ? "bg-foreground/[0.07] border border-foreground/20 ring-2 ring-foreground/30 shadow-[0_0_50px_-12px_hsl(var(--foreground)/0.2)]"

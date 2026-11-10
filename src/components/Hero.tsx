@@ -14,7 +14,7 @@ export const Hero = () => {
       className="min-h-screen flex items-center justify-center relative overflow-hidden pt-32 sm:pt-40 pb-16 sm:pb-24"
     >
       {/* Véu de vidro — esmaecido no topo e na base para emendar com a abertura */}
-      <div className="absolute inset-0 backdrop-blur-[3px] bg-background/10 z-[1] [mask-image:linear-gradient(to_bottom,transparent,black_22%,black_75%,transparent)]" />
+      <div className="absolute inset-0 md:backdrop-blur-[3px] bg-background/10 z-[1] [mask-image:linear-gradient(to_bottom,transparent,black_22%,black_75%,transparent)]" />
 
       {/* Gradientes radiais da marca */}
       <div className="absolute inset-0 pointer-events-none z-[2] [mask-image:linear-gradient(to_bottom,transparent,black_30%)]">

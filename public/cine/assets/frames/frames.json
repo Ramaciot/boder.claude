@@ -1,3 +1,3 @@
-{ "total": 160, "largura": 1440, "altura": 608,
+{ "total": 120, "largura": 1440, "altura": 608,
   "desktop": "assets/frames/desktop/f_{n}.webp",
   "mobile": "assets/frames/mobile/f_{n}.webp" }

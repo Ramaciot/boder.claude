@@ -66,19 +66,17 @@
   height: 100%;
   display: block;
 }
-/* Vídeo em loop do topo — crossfade com o canvas de quadros */
-.cine-video {
+/* Repouso: o astronauta "respira" — oscilação lenta só de transform.
+   A câmera não se aproxima sem scroll; isto é vida no lugar. */
+.cine-respira {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity 0.7s var(--ease);
-  pointer-events: none;
+  transform-origin: 50% 72%;
+  animation: cine-respira 3.6s ease-in-out infinite;
 }
-.cine-abertura.com-video .cine-video {
-  opacity: 1;
+@keyframes cine-respira {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.004); }
+  50% { transform: translate3d(0, -3px, 0) scale(1.015); }
 }
 
 /* Poeira flutuando — 3 camadas de pontos em CSS que só animam transform
@@ -93,7 +91,6 @@
 .cine-poeira span {
   position: absolute;
   inset: -260px;
-  will-change: transform;
   animation: cine-poeira-a 34s linear infinite;
   background-image:
     radial-gradient(circle at 18px 36px, rgb(238 243 240 / 0.55) 0 1px, transparent 1.8px),
@@ -258,64 +255,142 @@
   }
 }
 
-/* ── Meteoro: logo 3D da Boder no portal do filme ─────────────────────── */
+/* ── Meteoro: a logo 3D é a FONTE da cena ─────────────────────────────
+   O JS só grava --cx/--cy (centro do portal), --d (diâmetro do anel do
+   portal) e --feixe (até o astronauta). Ordem das camadas: feixe (nasce no
+   centro, atrás da logo) → brilho (preenche o portal, sem "redondo vazio") →
+   anel girando que abraça a logo → logo → núcleo → partículas sugadas. */
 .cine-meteoro {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  will-change: transform, opacity;
 }
-.cine-meteoro__brilho,
-.cine-meteoro__logo {
+.cine-meteoro > * {
   position: absolute;
-  translate: -50% -50%;
-}
-.cine-meteoro__brilho {
-  border-radius: 9999px;
-  background: radial-gradient(circle, rgb(23 201 173 / 0.42) 0%, rgb(16 185 129 / 0.16) 32%, transparent 64%);
-  mix-blend-mode: screen;
-  animation: cine-meteoro-pulso 3.2s ease-in-out infinite;
-}
-.cine-meteoro__logo {
-  width: auto;
-  max-width: none;
-  /* fundo quase preto da arte some no blend; a máscara apaga as bordas */
-  mix-blend-mode: screen;
-  -webkit-mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
-          mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
-  filter: drop-shadow(0 0 18px rgb(23 201 173 / 0.55)) saturate(1.15);
-  animation: cine-meteoro-gira 11s ease-in-out infinite;
-}
-.cine-meteoro__particulas {
-  position: absolute;
-  mix-blend-mode: screen;
+  left: var(--cx, 50%);
+  top: var(--cy, 27%);
+  pointer-events: none;
 }
 .cine-meteoro__feixe {
-  position: absolute;
-  width: 22px;
+  width: calc(var(--d, 280px) * 0.17);
+  height: var(--feixe, 40vh);
   translate: -50% 0;
   border-radius: 9999px;
-  background: linear-gradient(to bottom, rgb(220 255 245 / 0.55), rgb(23 201 173 / 0.32) 35%, rgb(16 185 129 / 0.1) 80%, transparent);
-  filter: blur(6px);
+  background: linear-gradient(to bottom, rgb(230 255 248 / 0.9), rgb(23 201 173 / 0.55) 28%, rgb(16 185 129 / 0.2) 72%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 30%, #000 70%, transparent);
+          mask-image: linear-gradient(to right, transparent, #000 30%, #000 70%, transparent);
   mix-blend-mode: screen;
-  animation: cine-feixe-pulso 2.4s ease-in-out infinite;
+  animation: cine-feixe-pulso 3.4s ease-in-out infinite;
 }
-/* Gira devagar no próprio eixo (balanço 3D) e flutua — uma imagem plana dando
-   a volta inteira mostraria o verso espelhado, por isso o balanço amplo. */
+.cine-meteoro__brilho {
+  width: calc(var(--d, 280px) * 2.4);
+  height: calc(var(--d, 280px) * 2.4);
+  translate: -50% -50%;
+  border-radius: 9999px;
+  /* núcleo claro + halo teal que preenche o oco do portal: a luz sai da logo */
+  background: radial-gradient(circle, rgb(220 255 245 / 0.8) 0%, rgb(23 201 173 / 0.66) 17%, rgb(16 185 129 / 0.38) 27%, rgb(23 201 173 / 0.12) 42%, transparent 60%);
+  mix-blend-mode: screen;
+  animation: cine-meteoro-pulso 3.4s ease-in-out infinite;
+}
+.cine-meteoro__anel {
+  width: calc(var(--d, 280px) * 1.25);
+  height: calc(var(--d, 280px) * 1.25);
+  translate: -50% -50%;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from 0deg,
+    rgb(23 201 173 / 0),
+    rgb(23 201 173 / 0.75) 10%,
+    rgb(240 255 250 / 0.6) 17%,
+    rgb(23 201 173 / 0) 29%,
+    rgb(16 185 129 / 0.6) 46%,
+    rgb(23 201 173 / 0) 60%,
+    rgb(139 92 246 / 0.35) 72%,
+    rgb(23 201 173 / 0.7) 87%,
+    rgb(23 201 173 / 0)
+  );
+  /* faixa que cobre a borda da logo E o anel do filme: abraço sem vão */
+  -webkit-mask-image: radial-gradient(closest-side, transparent 50%, #000 64%, #000 84%, transparent 100%);
+          mask-image: radial-gradient(closest-side, transparent 50%, #000 64%, #000 84%, transparent 100%);
+  mix-blend-mode: screen;
+  animation: cine-anel-gira 16s linear infinite;
+}
+.cine-meteoro__logo {
+  height: calc(var(--d, 280px) * 1.3);
+  width: auto;
+  max-width: none;
+  translate: -50% -52%;
+  /* fundo quase preto da arte some no blend; a máscara apaga as bordas */
+  mix-blend-mode: screen;
+  -webkit-mask-image: radial-gradient(closest-side, #000 64%, transparent 100%);
+          mask-image: radial-gradient(closest-side, #000 64%, transparent 100%);
+  filter: drop-shadow(0 0 22px rgb(23 201 173 / 0.6)) saturate(1.15);
+  animation: cine-meteoro-gira 12s ease-in-out infinite;
+}
+.cine-meteoro__nucleo {
+  width: calc(var(--d, 280px) * 0.9);
+  height: calc(var(--d, 280px) * 0.9);
+  translate: -50% -50%;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.32), rgb(23 201 173 / 0.12) 40%, transparent 65%);
+  mix-blend-mode: screen;
+  animation: cine-meteoro-pulso 3.4s ease-in-out infinite;
+}
+/* Partículas sugadas: espiralam para o centro (rotate + translateX → 0) */
+.cine-meteoro__sugadas {
+  width: 0;
+  height: 0;
+}
+.cine-meteoro__sugadas i {
+  position: absolute;
+  left: -1.5px;
+  top: -1.5px;
+  width: 3px;
+  height: 3px;
+  border-radius: 9999px;
+  background: rgb(210 255 244);
+  box-shadow: 0 0 6px 1px rgb(23 201 173 / 0.85);
+  opacity: 0;
+  animation-name: cine-sugada;
+  animation-timing-function: cubic-bezier(0.55, 0, 0.85, 0.4);
+  animation-iteration-count: infinite;
+}
+.cine-meteoro__sugadas i:nth-child(3n) {
+  width: 2px;
+  height: 2px;
+  background: rgb(190 170 255);
+  box-shadow: 0 0 5px 1px rgb(139 92 246 / 0.7);
+}
+@keyframes cine-sugada {
+  0% { transform: rotate(var(--a)) translateX(calc(var(--r) * var(--d, 280px))) scale(1); opacity: 0; }
+  14% { opacity: 1; }
+  80% { opacity: 0.9; }
+  100% { transform: rotate(calc(var(--a) + 150deg)) translateX(0) scale(0.25); opacity: 0; }
+}
+/* Balanço lento no próprio eixo (uma imagem plana dando a volta inteira
+   mostraria o verso espelhado) */
 @keyframes cine-meteoro-gira {
-  0% { transform: perspective(900px) rotateY(-28deg) rotateZ(-4deg) translateY(0) scale(1); }
-  25% { transform: perspective(900px) rotateY(0deg) rotateZ(0deg) translateY(-6px) scale(1.03); }
-  50% { transform: perspective(900px) rotateY(28deg) rotateZ(4deg) translateY(0) scale(1); }
-  75% { transform: perspective(900px) rotateY(0deg) rotateZ(0deg) translateY(6px) scale(0.98); }
-  100% { transform: perspective(900px) rotateY(-28deg) rotateZ(-4deg) translateY(0) scale(1); }
+  0%, 100% { transform: perspective(900px) rotateY(-14deg) rotateZ(-2deg); }
+  50% { transform: perspective(900px) rotateY(14deg) rotateZ(2deg); }
 }
 @keyframes cine-meteoro-pulso {
-  0%, 100% { opacity: 0.75; transform: scale(0.92); }
-  50% { opacity: 1; transform: scale(1.08); }
+  0%, 100% { opacity: 0.8; transform: scale(0.94); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+@keyframes cine-anel-gira {
+  to { transform: rotate(360deg); }
 }
 @keyframes cine-feixe-pulso {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 0.95; }
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+
+/* Pausas: meteoro fora de vista, ou a abertura inteira fora da tela */
+.cine-meteoro.is-fora,
+.cine-meteoro.is-fora *,
+.cine-abertura:not(.em-cena) .cine-palco *,
+.cine-abertura:not(.em-cena) .cine-palco::after {
+  animation-play-state: paused !important;
 }
 
 /* ── Título que sai da tela ───────────────────────────────────────────── */
@@ -327,7 +402,6 @@
   bottom: 9vh;
   max-width: min(880px, calc(100vw - 2 * var(--gutter)));
   pointer-events: none;
-  will-change: transform, opacity;
 }
 .cine-titulo-sair h1 {
   font-size: clamp(44px, 7.6vw, 118px);
@@ -485,14 +559,15 @@
     transition: none !important;
   }
   .cine-momento,
-  .cine-dica,
-  .cine-video {
+  .cine-dica {
     display: none;
   }
-  .cine-meteoro__logo,
-  .cine-meteoro__brilho,
-  .cine-meteoro__feixe {
+  .cine-respira,
+  .cine-meteoro * {
     animation: none !important;
+  }
+  .cine-meteoro__sugadas {
+    display: none;
   }
 }
 
@@ -514,4 +589,35 @@ html[data-cine-splash] .chat-flutuante {
   transition:
     opacity 0.4s,
     transform 0.4s;
+}
+
+/* ── Celular: menos trabalho de GPU durante a rolagem ─────────────────── */
+@media (max-width: 760px) {
+  /* grão fixo (sem animar uma camada do dobro da tela) */
+  .cine-abertura.em-cena .cine-palco::after {
+    animation: none;
+  }
+  /* 2 camadas de poeira em vez de 3 */
+  .cine-poeira span:nth-child(2) {
+    display: none;
+  }
+  /* painéis: vidro sem backdrop-filter (caro sobre o canvas em movimento) */
+  .cine-painel {
+    -webkit-backdrop-filter: none;
+            backdrop-filter: none;
+    background: rgb(5 8 7 / 0.72);
+  }
+  .cine-painel--vidro {
+    background: rgb(5 8 7 / 0.66);
+  }
+  .cine-meteoro__sugadas i:nth-child(n + 13) {
+    display: none;
+  }
+}
+
+/* No celular, a bolha de boas-vindas do chat não cobre os painéis da abertura */
+@media (max-width: 760px) {
+  html[data-cine-ativa] .chat-bolha {
+    display: none;
+  }
 }

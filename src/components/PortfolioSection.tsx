@@ -113,7 +113,7 @@ export const PortfolioSection = () => {
     <section className="py-32 bg-transparent relative overflow-hidden">
       {/* Vidro fosco do original, com bordas esmaecidas para não formar faixa */}
       <div
-        className="absolute inset-0 backdrop-blur-md pointer-events-none [mask-image:linear-gradient(to_bottom,transparent,black_25%,black_75%,transparent)]"
+        className="absolute inset-0 md:backdrop-blur-md pointer-events-none [mask-image:linear-gradient(to_bottom,transparent,black_25%,black_75%,transparent)]"
         aria-hidden="true"
       />
       <div
@@ -137,7 +137,7 @@ export const PortfolioSection = () => {
             Soluções completas para transformar seu negócio digital
           </p>
           <div data-reveal style={{ "--reveal-delay": "280ms" } as CSSProperties} className="flex justify-center">
-            <div ref={buttonRef} className="will-change-transform relative" style={{ transformOrigin: "center center" }}>
+            <div ref={buttonRef} className="relative" style={{ transformOrigin: "center center" }}>
               <SpaceButton onClick={handleClick}>VEJA NOSSOS SITES</SpaceButton>
             </div>
           </div>

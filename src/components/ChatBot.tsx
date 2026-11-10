@@ -338,7 +338,7 @@ const ChatBot = () => {
         {/* Bolha de boas-vindas */}
         {showWelcomeBubble && !isOpen && (
           <div
-            className="absolute bottom-16 right-0 w-72 bg-card/95 backdrop-blur-xl border border-border/50 rounded-2xl rounded-br-none shadow-2xl p-5 animate-fade-up cursor-pointer"
+            className="chat-bolha absolute bottom-16 right-0 w-72 bg-card/95 backdrop-blur-xl border border-border/50 rounded-2xl rounded-br-none shadow-2xl p-5 animate-fade-up cursor-pointer"
             onClick={toggleChatBot}
           >
             <button
