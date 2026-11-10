@@ -22,7 +22,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase, isPortfolioEnabled as isBackendEnabled, type Niche, type PortfolioSite } from "@/lib/supabase";
 import { NicheIcon } from "@/components/NicheIcon";
-import logoWhite from "@/assets/boder-logo.png";
+import logoWhite from "@/assets/boder-logo.webp";
 
 interface Meeting {
   id: string;

@@ -1,6 +1,8 @@
+import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowUpRight,
+  Plus,
   Facebook,
   Instagram,
   Linkedin,
@@ -8,10 +10,15 @@ import {
   MessageCircle,
   Phone,
 } from "lucide-react";
-import { contact, footer, services, social } from "@/content/site";
+import { contact, faq, footer, services, social } from "@/content/site";
 import { useTheme } from "@/lib/theme";
-import logoWhite from "@/assets/boder-logo.png";
-import logoBlack from "@/assets/boder-logo-black.png";
+import logoWhite from "@/assets/boder-logo.webp";
+import logoBlack from "@/assets/boder-logo-black.webp";
+
+const atraso = (ms: number) => ({ "--reveal-delay": `${ms}ms` }) as CSSProperties;
+
+/** Faixa de texto gigante correndo no topo do rodapé (só CSS, transform). */
+const MARQUEE = ["Sites que vendem", "Tráfego pago", "Social media", "IA de atendimento", "Estratégia digital"];
 
 const socialIcons: Record<string, typeof Instagram> = {
   WhatsApp: MessageCircle,
@@ -24,7 +31,7 @@ const navigation = [
   { label: "Início", href: "/#home" },
   { label: "Serviços", href: "/#servicos" },
   { label: "Depoimentos", href: "/#depoimentos" },
-  { label: "FAQ", href: "/#faq" },
+  { label: "FAQ", href: "#faq" },
   { label: "Portfólio", href: "/portfolio" },
 ];
 
@@ -38,11 +45,27 @@ export const Footer = () => {
       {/* Profundidade sutil — some no fundo contínuo, sem faixa que corte */}
       <div className="absolute inset-0 bg-gradient-to-t from-primary/[0.06] via-transparent to-transparent pointer-events-none" />
 
-      <div className="container pt-16 sm:pt-20 pb-8 relative z-10">
+      {/* Marquee estilo Lusion — duas cópias para o loop contínuo */}
+      <div className="rodape-marquee relative z-10 pt-14 sm:pt-20" aria-hidden="true">
+        <div className="rodape-marquee__trilho">
+          {[0, 1].map((copia) => (
+            <div key={copia} className="rodape-marquee__grupo">
+              {MARQUEE.map((item) => (
+                <span key={item} className="rodape-marquee__item">
+                  {item}
+                  <span className="rodape-marquee__ponto">✦</span>
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="container pt-12 sm:pt-16 pb-8 relative z-10">
         {/* Logo e tagline */}
-        <div className="flex flex-col items-center justify-center gap-4 pb-12 sm:pb-16">
+        <div data-reveal className="flex flex-col items-center justify-center gap-4 pb-12 sm:pb-16">
           <Link to="/" className="inline-block transition-transform duration-300 hover:scale-105">
-            <img src={logo} alt="Boder Space" className="h-12 sm:h-14 w-auto" />
+            <img src={logo} alt="Boder Space" width={56} height={56} className="h-12 sm:h-14 w-auto" />
           </Link>
           <p className="text-muted-foreground text-sm sm:text-base text-center max-w-md leading-relaxed">
             {footer.tagline}
@@ -51,7 +74,7 @@ export const Footer = () => {
 
         {/* Grade de links */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 py-12 sm:py-16">
-          <div>
+          <div data-reveal>
             <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70 mb-5">
               Serviços
             </h4>
@@ -70,7 +93,7 @@ export const Footer = () => {
             </ul>
           </div>
 
-          <div>
+          <div data-reveal style={atraso(100)}>
             <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70 mb-5">
               Navegação
             </h4>
@@ -96,7 +119,7 @@ export const Footer = () => {
             </a>
           </div>
 
-          <div className="col-span-2 md:col-span-2">
+          <div data-reveal style={atraso(200)} className="col-span-2 md:col-span-2">
             <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70 mb-5">
               Contato
             </h4>
@@ -135,6 +158,49 @@ export const Footer = () => {
                 <p className="text-sm text-primary mt-2 font-medium">{footer.hours.highlight}</p>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Perguntas frequentes — área discreta (antes era uma seção da home) */}
+        <div id="faq" className="scroll-mt-24 border-t border-border/30 pt-10 sm:pt-12 pb-10">
+          <div data-reveal className="flex flex-wrap items-baseline justify-between gap-3 mb-5">
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
+              Perguntas frequentes
+            </h4>
+            <a
+              href={contact.whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-muted-foreground hover:text-primary transition-colors duration-200 inline-flex items-center gap-1"
+            >
+              Ainda tem dúvidas? Fale conosco pelo WhatsApp
+              <ArrowUpRight className="w-3 h-3" />
+            </a>
+          </div>
+          {/* Duas colunas independentes: abrir uma pergunta não estica a vizinha */}
+          <div className="grid md:grid-cols-2 gap-x-10 items-start">
+            {[0, 1].map((coluna) => (
+              <div key={coluna}>
+                {faq
+                  .filter((_, index) => index % 2 === coluna)
+                  .map((item, index) => (
+                    <details
+                      key={item.question}
+                      data-reveal
+                      style={atraso(coluna * 90 + index * 60)}
+                      className="rodape-faq group"
+                    >
+                      <summary className="flex items-start justify-between gap-4 py-3.5 cursor-pointer list-none text-sm text-muted-foreground hover:text-foreground transition-colors duration-200">
+                        <span>{item.question}</span>
+                        <Plus className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary/70 transition-transform duration-300 group-open:rotate-45" />
+                      </summary>
+                      <p className="rodape-faq__resposta pb-4 pr-8 text-sm text-muted-foreground/80 leading-relaxed">
+                        {item.answer}
+                      </p>
+                    </details>
+                  ))}
+              </div>
+            ))}
           </div>
         </div>
 

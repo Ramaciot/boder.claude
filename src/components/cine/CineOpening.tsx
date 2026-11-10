@@ -1,5 +1,7 @@
 import { useEffect, useRef, type CSSProperties, type MouseEvent } from "react";
 import { useMeetingForm } from "@/contexts/MeetingFormContext";
+// Logo oficial (flat). A versão 3D do pacote fica reservada para a cena.
+import cineLogo from "@/assets/boder-logo.webp";
 import "./cine.css";
 
 /**
@@ -335,13 +337,12 @@ export const CineOpening = () => {
 
         <header className="cine-topo">
           <a href="#inicio" className="cine-marca" aria-label="Boder Space" onClick={goTo("inicio")}>
-            <img src="/cine/assets/logo.png" alt="Boder Space" className="cine-marca-logo" width={30} height={40} />
+            <img src={cineLogo} alt="Boder Space" className="cine-marca-logo" width={40} height={40} />
             <span className="cine-marca-texto">Boder Space</span>
           </a>
           <nav className="cine-menu" aria-label="Seções">
             <a href="#servicos" onClick={goTo("servicos")}>Serviços</a>
             <a href="#depoimentos" onClick={goTo("depoimentos")}>Depoimentos</a>
-            <a href="#faq" onClick={goTo("faq")}>FAQ</a>
             <button type="button" className="cine-menu-cta" onClick={openMeetingForm}>
               Fale conosco
             </button>

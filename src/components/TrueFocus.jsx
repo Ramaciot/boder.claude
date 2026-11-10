@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
 import './TrueFocus.css';
 
 /**
  * TrueFocus (react-bits) — palavras alternam o foco com moldura de "câmera".
- * Adaptação local: import de 'framer-motion' (lib já usada no projeto).
+ * Versão sem framer-motion: a moldura desliza com transição CSS (mesma
+ * duração), sem biblioteca de animação.
  */
 const TrueFocus = ({
   sentence = 'True Focus',
@@ -105,19 +105,14 @@ const TrueFocus = ({
         );
       })}
 
-      <motion.div
+      <div
         className="focus-frame"
-        animate={{
-          x: focusRect.x,
-          y: focusRect.y,
+        style={{
+          transform: `translate3d(${focusRect.x}px, ${focusRect.y}px, 0)`,
           width: focusRect.width,
           height: focusRect.height,
-          opacity: currentIndex >= 0 ? 1 : 0
-        }}
-        transition={{
-          duration: animationDuration
-        }}
-        style={{
+          opacity: currentIndex >= 0 ? 1 : 0,
+          transition: `transform ${animationDuration}s ease, width ${animationDuration}s ease, height ${animationDuration}s ease, opacity ${animationDuration}s ease`,
           '--border-color': borderColor,
           '--glow-color': glowColor
         }}
@@ -126,7 +121,7 @@ const TrueFocus = ({
         <span className="corner top-right"></span>
         <span className="corner bottom-left"></span>
         <span className="corner bottom-right"></span>
-      </motion.div>
+      </div>
     </div>
   );
 };

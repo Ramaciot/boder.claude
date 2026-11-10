@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { animate } from "framer-motion";
 
 const STARS = [
   { left: "8%", top: "20%", delay: "0.1s" },
@@ -82,12 +81,30 @@ export const PortfolioSection = () => {
 
     const button = buttonRef.current;
     const flash = flashRef.current;
-    // Mesma timeline do original: zoom 80x (1.8s, power4.in), blur/fade nos
-    // últimos 0.8s e flash branco cobrindo a tela antes de navegar.
-    const powerIn = (t: number) => t * t * t * t * t;
-    animate(button, { scale: 80 }, { duration: 1.8, ease: powerIn });
-    animate(button, { filter: "blur(40px)", opacity: 0 }, { duration: 0.8, delay: 1.0 });
-    await animate(flash, { opacity: [0, 1, 0.8, 1, 1] }, { duration: 0.65, delay: 1.4, times: [0, 0.23, 0.38, 0.54, 1] });
+    // Mesma timeline do original, com a Web Animations API nativa: zoom 80x
+    // (1.8s, curva "power4.in"), blur/fade nos últimos 0.8s e flash branco
+    // cobrindo a tela antes de navegar.
+    const powerIn = "cubic-bezier(0.755, 0.05, 0.855, 0.06)";
+    button.animate([{ transform: "scale(1)" }, { transform: "scale(80)" }], {
+      duration: 1800,
+      easing: powerIn,
+      fill: "forwards",
+    });
+    button.animate([{ filter: "blur(0px)", opacity: 1 }, { filter: "blur(40px)", opacity: 0 }], {
+      duration: 800,
+      delay: 1000,
+      fill: "forwards",
+    });
+    await flash.animate(
+      [
+        { opacity: 0, offset: 0 },
+        { opacity: 1, offset: 0.23 },
+        { opacity: 0.8, offset: 0.38 },
+        { opacity: 1, offset: 0.54 },
+        { opacity: 1, offset: 1 },
+      ],
+      { duration: 650, delay: 1400, fill: "forwards" },
+    ).finished;
 
     navigate("/portfolio");
   }, [navigate, running]);

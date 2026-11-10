@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Play } from "lucide-react";
-import videoThumbnail from "@/assets/video-thumbnail.jpeg";
+import videoThumbnail from "@/assets/video-thumbnail.webp";
 
 const quotes = [
   {
@@ -42,50 +41,39 @@ const quotes = [
   },
 ];
 
-/** Moldura 3D que "deita" e se endireita com a rolagem (ContainerScroll). */
-const ContainerScroll = ({ children }: { children: ReactNode }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref });
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth <= 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
-  const rotate = useTransform(scrollYProgress, [0, 1], [15, 0]);
-  const scale = useTransform(scrollYProgress, [0, 1], isMobile ? [0.85, 0.95] : [1.02, 1]);
-
-  return (
-    <div ref={ref} className="h-[32rem] sm:h-[36rem] md:h-[42rem] flex items-center justify-center relative p-2 md:p-8">
-      <div className="py-4 md:py-8 w-full relative" style={{ perspective: "1000px" }}>
-        <motion.div
-          style={{
-            rotateX: rotate,
-            scale,
-            boxShadow:
-              "0 0 #0000004d, 0 9px 20px #0000004a, 0 37px 37px #00000042, 0 84px 50px #00000026, 0 149px 60px #0000000a, 0 233px 65px #00000003",
-          }}
-          className="max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto -mt-4 md:-mt-6 h-[24rem] sm:h-[28rem] md:h-[32rem] lg:h-[36rem] w-full border-4 border-border/30 p-1 sm:p-1.5 md:p-2 bg-background/80 backdrop-blur-xl rounded-[16px] sm:rounded-[20px] md:rounded-[24px] shadow-2xl"
-        >
-          <div className="h-full w-full overflow-hidden rounded-xl sm:rounded-2xl bg-black flex items-center justify-center">
-            {children}
-          </div>
-        </motion.div>
+/**
+ * Moldura 3D que "deita" e se endireita com a rolagem (ContainerScroll).
+ * Antes era framer-motion (useScroll); agora é CSS scroll-driven
+ * (animation-timeline: view(), ver "Moldura 3D" em index.css) — zero JS.
+ * Navegadores sem suporte mostram a moldura já endireitada.
+ */
+const ContainerScroll = ({ children }: { children: ReactNode }) => (
+  <div className="h-[32rem] sm:h-[36rem] md:h-[42rem] flex items-center justify-center relative p-2 md:p-8">
+    <div className="py-4 md:py-8 w-full relative" style={{ perspective: "1000px" }}>
+      <div
+        style={{
+          boxShadow:
+            "0 0 #0000004d, 0 9px 20px #0000004a, 0 37px 37px #00000042, 0 84px 50px #00000026, 0 149px 60px #0000000a, 0 233px 65px #00000003",
+        }}
+        className="moldura-3d max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto -mt-4 md:-mt-6 h-[24rem] sm:h-[28rem] md:h-[32rem] lg:h-[36rem] w-full border-4 border-border/30 p-1 sm:p-1.5 md:p-2 bg-background/80 backdrop-blur-xl rounded-[16px] sm:rounded-[20px] md:rounded-[24px] shadow-2xl"
+      >
+        <div className="h-full w-full overflow-hidden rounded-xl sm:rounded-2xl bg-black flex items-center justify-center">
+          {children}
+        </div>
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 const VideoTestimonial = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [started, setStarted] = useState(false);
 
   const play = () => {
-    videoRef.current?.play();
+    void videoRef.current?.play();
     setPlaying(true);
+    setStarted(true);
   };
 
   return (
@@ -94,7 +82,6 @@ const VideoTestimonial = () => {
         <video
           ref={videoRef}
           className="w-full h-full object-contain"
-          poster={videoThumbnail}
           controls={playing}
           onPause={() => setPlaying(false)}
           onEnded={() => setPlaying(false)}
@@ -104,15 +91,28 @@ const VideoTestimonial = () => {
           <source src="/videos/testimonial-video.mov" type="video/mp4" />
           Seu navegador não suporta vídeos.
         </video>
+        {/* Capa em WebP, só baixada quando a seção se aproxima (lazy) */}
+        {!started && (
+          <img
+            src={videoThumbnail}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            width={720}
+            height={1280}
+            className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+          />
+        )}
         {!playing && (
           <button
             type="button"
             onClick={play}
             aria-label="Assistir o depoimento"
-            className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/70 via-black/30 to-transparent cursor-pointer hover:bg-black/40 transition-colors z-10"
+            className="group/play absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/70 via-black/30 to-transparent cursor-pointer hover:bg-black/40 transition-colors z-10"
           >
             <div className="relative">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-primary to-violet-500 flex items-center justify-center shadow-2xl shadow-primary/40 hover:scale-110 transition-transform">
+              <span className="absolute inset-0 rounded-full bg-primary/40 animate-ping-lento" aria-hidden />
+              <div className="relative w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-primary to-violet-500 flex items-center justify-center shadow-2xl shadow-primary/40 group-hover/play:scale-110 transition-transform duration-300">
                 <Play className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-white ml-0.5" fill="currentColor" />
               </div>
             </div>

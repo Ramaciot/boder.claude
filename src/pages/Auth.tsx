@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase, isPortfolioEnabled as isBackendEnabled } from "@/lib/supabase";
-import boderLogo from "@/assets/boder-logo.png";
+import boderLogo from "@/assets/boder-logo.webp";
 
 // Variantes de transição entre telas — portadas do site oficial
 const pageVariants = {

@@ -4,15 +4,14 @@ import { ArrowRight, Facebook, Instagram, Linkedin, LogIn, Menu, MessageCircle, 
 import { contact } from "@/content/site";
 import { useMeetingForm } from "@/contexts/MeetingFormContext";
 import { useTheme } from "@/lib/theme";
-import logoWhite from "@/assets/boder-logo.png";
-import logoBlack from "@/assets/boder-logo-black.png";
+import logoWhite from "@/assets/boder-logo.webp";
+import logoBlack from "@/assets/boder-logo-black.webp";
 
 const navItems = [
   { label: "Home", hash: "#home" },
   { label: "Serviços", hash: "#servicos" },
   { label: "Portfólio", to: "/portfolio" },
   { label: "Depoimentos", hash: "#depoimentos" },
-  { label: "FAQ", hash: "#faq" },
 ];
 
 // Ícones sociais circulares coloridos (modelo do site oficial)
@@ -62,7 +61,7 @@ export const Header = () => {
             to="/"
             className="flex items-center transition-transform duration-300 hover:scale-[1.03] shrink-0"
           >
-            <img src={logo} alt="Boder Space" className="h-8 sm:h-9 w-auto" />
+            <img src={logo} alt="Boder Space" width={36} height={36} className="h-8 sm:h-9 w-auto" />
           </Link>
 
           {/* Navegação desktop */}

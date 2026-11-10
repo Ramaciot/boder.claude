@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface GlassButtonProps {
@@ -10,7 +9,7 @@ interface GlassButtonProps {
 }
 
 const base =
-  "group relative overflow-hidden inline-flex items-center justify-center px-8 py-4 rounded-full backdrop-blur-xl border border-white/20 hover:border-white/40 bg-gradient-to-tr from-white/10 via-white/5 to-transparent shadow-lg hover:shadow-2xl hover:shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out cursor-pointer text-foreground font-semibold tracking-wide";
+  "group relative overflow-hidden inline-flex items-center justify-center px-8 py-4 rounded-full backdrop-blur-xl border border-white/20 hover:border-white/40 bg-gradient-to-tr from-white/10 via-white/5 to-transparent shadow-lg hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-0.5 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-out cursor-pointer text-foreground font-semibold tracking-wide";
 
 const Inner = ({ children }: { children: ReactNode }) => (
   <>
@@ -20,20 +19,14 @@ const Inner = ({ children }: { children: ReactNode }) => (
   </>
 );
 
-/** Botão de vidro do hero — réplica do componente do site oficial. */
+/** Botão de vidro do hero — réplica do componente do site oficial (só CSS). */
 export const GlassButton = ({ children, onClick, href, className }: GlassButtonProps) =>
   href ? (
-    <motion.a href={href} className={cn(base, className)} whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
+    <a href={href} className={cn(base, className)}>
       <Inner>{children}</Inner>
-    </motion.a>
+    </a>
   ) : (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      className={cn(base, className)}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
-    >
+    <button type="button" onClick={onClick} className={cn(base, className)}>
       <Inner>{children}</Inner>
-    </motion.button>
+    </button>
   );

@@ -5,10 +5,9 @@ import { Services } from "@/components/Services";
 import { PortfolioSection } from "@/components/PortfolioSection";
 import { AppSection } from "@/components/AppSection";
 import { Testimonials } from "@/components/Testimonials";
-import { FAQ } from "@/components/FAQ";
 import { FinalCTA } from "@/components/FinalCTA";
 import { Footer } from "@/components/Footer";
-import ChatBot from "@/components/ChatBot";
+import { ChatBotLazy } from "@/components/ChatBotLazy";
 import { BrandBackground } from "@/components/BrandBackground";
 import { useScrollReveal } from "@/lib/useScrollReveal";
 import { CineOpening } from "@/components/cine/CineOpening";
@@ -21,7 +20,7 @@ interface HomeProps {
 /**
  * Página inicial — abertura cinematográfica no topo e, abaixo dela, a mesma
  * ordem de seções do site oficial:
- * Hero → Serviços → Sites que Vendem → App → Depoimentos → FAQ → CTA.
+ * Hero → Serviços → Sites que Vendem → App → Depoimentos → CTA (FAQ fica no rodapé).
  */
 const Home = ({ scrollTo }: HomeProps) => {
   useScrollReveal();
@@ -52,12 +51,11 @@ const Home = ({ scrollTo }: HomeProps) => {
           <PortfolioSection />
           <AppSection />
           <Testimonials />
-          <FAQ />
           <FinalCTA />
         </main>
         <Footer />
       </div>
-      <ChatBot />
+      <ChatBotLazy />
     </>
   );
 };

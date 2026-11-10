@@ -179,8 +179,7 @@
 }
 .cine-marca-logo {
   height: 40px;
-  width: auto;
-  border-radius: 10px;
+  width: 40px;
 }
 /* Wordmark com a mesma fonte do header do site (pilha "sans" do Tailwind) */
 .cine-marca-texto {

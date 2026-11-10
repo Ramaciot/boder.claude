@@ -25,15 +25,36 @@ export const useScrollReveal = () => {
 
     root.classList.add("reveal-ready");
     const timers: number[] = [];
+    const pendentes = new Set(elements);
+    const revelar = (el: HTMLElement) => {
+      if (!pendentes.delete(el)) return;
+      el.classList.add("is-revealed");
+      observer.unobserve(el);
+      const delay = parseFloat(el.style.getPropertyValue("--reveal-delay")) || 0;
+      timers.push(window.setTimeout(() => el.classList.add("reveal-done"), delay + 1400));
+      if (!pendentes.size) window.removeEventListener("scroll", aoRolar);
+    };
+    // Rede de segurança: num salto (link do menu, âncora), um elemento pode ir
+    // de "abaixo" para "acima" da tela sem cruzá-la — o observer não avisa.
+    // Quando a rolagem para, revela o que já ficou para trás.
+    let parou = 0;
+    const aoRolar = () => {
+      window.clearTimeout(parou);
+      parou = window.setTimeout(() => {
+        pendentes.forEach((el) => {
+          if (el.getBoundingClientRect().bottom < 0) revelar(el);
+        });
+      }, 160);
+    };
+    window.addEventListener("scroll", aoRolar, { passive: true });
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          const el = entry.target as HTMLElement;
-          el.classList.add("is-revealed");
-          observer.unobserve(el);
-          const delay = parseFloat(el.style.getPropertyValue("--reveal-delay")) || 0;
-          timers.push(window.setTimeout(() => el.classList.add("reveal-done"), delay + 1400));
+          // Revela ao entrar na tela — ou se já ficou para trás (acima), p.ex.
+          // quando o visitante pula direto para uma seção pelo menu.
+          const passou = entry.boundingClientRect.bottom < 0;
+          if (!entry.isIntersecting && !passou) return;
+          revelar(entry.target as HTMLElement);
         });
       },
       { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
@@ -42,6 +63,8 @@ export const useScrollReveal = () => {
 
     return () => {
       observer.disconnect();
+      window.removeEventListener("scroll", aoRolar);
+      window.clearTimeout(parou);
       timers.forEach((t) => window.clearTimeout(t));
       root.classList.remove("reveal-ready");
     };

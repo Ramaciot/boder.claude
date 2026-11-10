@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 import { contact } from "@/content/site";
 import { useMeetingForm } from "@/contexts/MeetingFormContext";
 import { useTheme } from "@/lib/theme";
-import logoWhite from "@/assets/boder-logo.png";
-import logoBlack from "@/assets/boder-logo-black.png";
+import logoWhite from "@/assets/boder-logo.webp";
+import logoBlack from "@/assets/boder-logo-black.webp";
 
 /**
  * Navegação flutuante (dock) — espelha o header no modelo do site oficial.

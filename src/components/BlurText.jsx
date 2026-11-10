@@ -1,21 +1,13 @@
-import { motion } from 'framer-motion';
-import { useEffect, useRef, useState, useMemo } from 'react';
-
-const buildKeyframes = (from, steps) => {
-  const keys = new Set([...Object.keys(from), ...steps.flatMap(s => Object.keys(s))]);
-
-  const keyframes = {};
-  keys.forEach(k => {
-    keyframes[k] = [from[k], ...steps.map(s => s[k])];
-  });
-  return keyframes;
-};
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * BlurText (react-bits) — texto que entra palavra a palavra saindo do blur.
- * Adaptações locais: import de 'framer-motion', prop `as` (para uso dentro
- * de h1), `startDelay` (cascata entre linhas) e `segmentClassName`
- * (estilo por palavra, ex.: gradiente).
+ *
+ * Versão sem framer-motion: os mesmos keyframes do original (blur 10→5→0px,
+ * opacidade 0→0,5→1, deslocamento ±50px→∓5px→0) viram uma animação CSS por
+ * palavra (ver "BlurText" em index.css), disparada por IntersectionObserver.
+ * Mantém as props usadas no site: `as`, `delay`, `direction`, `startDelay`,
+ * `stepDuration`, `animateBy`, `segmentClassName`.
  */
 const BlurText = ({
   text = '',
@@ -25,10 +17,6 @@ const BlurText = ({
   direction = 'top',
   threshold = 0.1,
   rootMargin = '0px',
-  animationFrom = undefined,
-  animationTo = undefined,
-  easing = t => t,
-  onAnimationComplete = undefined,
   stepDuration = 0.35,
   as = 'p',
   startDelay = 0,
@@ -39,74 +27,47 @@ const BlurText = ({
   const ref = useRef(null);
 
   useEffect(() => {
-    if (!ref.current) return;
+    const el = ref.current;
+    if (!el) return;
+    if (!('IntersectionObserver' in window)) {
+      setInView(true);
+      return;
+    }
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setInView(true);
-          observer.unobserve(ref.current);
+          observer.disconnect();
         }
       },
       { threshold, rootMargin }
     );
-    observer.observe(ref.current);
+    observer.observe(el);
     return () => observer.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threshold, rootMargin]);
 
-  const defaultFrom = useMemo(
-    () =>
-      direction === 'top' ? { filter: 'blur(10px)', opacity: 0, y: -50 } : { filter: 'blur(10px)', opacity: 0, y: 50 },
-    [direction]
-  );
-
-  const defaultTo = useMemo(
-    () => [
-      {
-        filter: 'blur(5px)',
-        opacity: 0.5,
-        y: direction === 'top' ? 5 : -5
-      },
-      { filter: 'blur(0px)', opacity: 1, y: 0 }
-    ],
-    [direction]
-  );
-
-  const fromSnapshot = animationFrom ?? defaultFrom;
-  const toSnapshots = animationTo ?? defaultTo;
-
-  const stepCount = toSnapshots.length + 1;
-  const totalDuration = stepDuration * (stepCount - 1);
-  const times = Array.from({ length: stepCount }, (_, i) => (stepCount === 1 ? 0 : i / (stepCount - 1)));
-
   const Tag = as;
+  const duration = stepDuration * 2; // dois passos, como no original
 
   return (
-    <Tag ref={ref} className={className} style={{ display: 'flex', flexWrap: 'wrap' }}>
-      {elements.map((segment, index) => {
-        const animateKeyframes = buildKeyframes(fromSnapshot, toSnapshots);
-
-        const spanTransition = {
-          duration: totalDuration,
-          times,
-          delay: startDelay + (index * delay) / 1000
-        };
-        spanTransition.ease = easing;
-
-        return (
-          <motion.span
-            className={`inline-block will-change-[transform,filter,opacity] ${segmentClassName}`}
-            key={index}
-            initial={fromSnapshot}
-            animate={inView ? animateKeyframes : fromSnapshot}
-            transition={spanTransition}
-            onAnimationComplete={index === elements.length - 1 ? onAnimationComplete : undefined}
-          >
-            {segment === ' ' ? ' ' : segment}
-            {animateBy === 'words' && index < elements.length - 1 && ' '}
-          </motion.span>
-        );
-      })}
+    <Tag
+      ref={ref}
+      className={`blur-text blur-text--${direction === 'top' ? 'top' : 'bottom'} ${inView ? 'is-in' : ''} ${className}`}
+      style={{ display: 'flex', flexWrap: 'wrap' }}
+    >
+      {elements.map((segment, index) => (
+        <span
+          className={`blur-text__seg inline-block ${segmentClassName}`}
+          key={index}
+          style={{
+            animationDuration: `${duration}s`,
+            animationDelay: `${startDelay + (index * delay) / 1000}s`
+          }}
+        >
+          {segment === ' ' ? ' ' : segment}
+          {animateBy === 'words' && index < elements.length - 1 && ' '}
+        </span>
+      ))}
     </Tag>
   );
 };

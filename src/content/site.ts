@@ -131,3 +131,37 @@ export const footer = {
     highlight: "Respondemos em até 1h ⚡",
   },
 } as const;
+
+/** Perguntas frequentes — exibidas no rodapé (área discreta, âncora #faq). */
+export const faq = [
+  {
+    question: '"A grana tá curta". Será que preciso mesmo de uma agência?',
+    answer:
+      "Justamente quando a grana está curta é que o marketing se torna ainda mais essencial. Empresas que crescem entendem que investir em uma boa estratégia é o caminho mais rápido para atrair clientes e aumentar o faturamento. Adiar esse passo pode custar muito mais caro lá na frente.",
+    icon: "💰",
+  },
+  {
+    question: "Não tenho time de vendas. Preciso contratar pessoas antes?",
+    answer:
+      "Não necessariamente. Nossa agência cuida de atrair os clientes até você. Se o seu negócio já está preparado para atender, mesmo sem uma equipe de vendas, está tudo certo. Podemos agendar uma conversa para entender melhor sua estrutura e ver o que faz sentido no seu caso.",
+    icon: "👥",
+  },
+  {
+    question: "Tem alguma garantia de resultado?",
+    answer:
+      "Não. Fórmula mágica não existe, e prometer isso seria irresponsável. Acreditamos em trabalho conjunto: aplicamos estratégias eficazes, mas sua participação e constância são essenciais. Resultados vêm com disciplina e um bom planejamento colocado em prática.",
+    icon: "🎯",
+  },
+  {
+    question: "Meu negócio está iniciando, é o momento de contratar uma agência?",
+    answer:
+      "Se seu negócio está iniciando, não existe opção melhor do que começar da maneira correta: contratar uma agência no momento inicial pode impulsionar seu início. Temos uma linha de serviços especiais para pequenos empreendedores. Consulte-nos.",
+    icon: "🚀",
+  },
+  {
+    question: "Vocês podem me mandar uma proposta comercial?",
+    answer:
+      "Nossos serviços são personalizados, por isso preferimos apresentar nossas soluções em uma breve reunião. Assim entendemos melhor seu negócio e mostramos o que realmente faz sentido para você. Chama a gente no WhatsApp e agendamos rapidinho!",
+    icon: "📋",
+  },
+] as const;

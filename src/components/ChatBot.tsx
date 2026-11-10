@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { contact } from "@/content/site";
 import { useMeetingForm } from "@/contexts/MeetingFormContext";
+import { aoPedirAbertura, consumirAberturaPendente } from "@/lib/chatEvents";
 import { chatEndpoint, chatConfig, isAIChatEnabled } from "@/lib/boderChat";
 
 interface Message {
@@ -84,11 +85,6 @@ const getDailyWelcomeMessage = () => {
   return `Olá! 👋 ${byDay[day] ?? "Como posso ajudar hoje?"}\n\nSelecione uma opção abaixo ou digite sua mensagem:`;
 };
 
-const OPEN_EVENT = "boder:open-chat";
-
-/** Abre o chat de qualquer lugar da página (ex.: CTA "Fale Conosco"). */
-export const openChatBot = () => window.dispatchEvent(new Event(OPEN_EVENT));
-
 const ChatBot = () => {
   const { openMeetingForm } = useMeetingForm();
   const [isOpen, setIsOpen] = useState(false);
@@ -105,10 +101,11 @@ const ChatBot = () => {
 
   const toggleChatBot = () => setIsOpen((open) => !open);
 
+  // Aberturas pedidas de fora (CTA "Fale Conosco"), inclusive antes de o
+  // chat terminar de carregar.
   useEffect(() => {
-    const open = () => setIsOpen(true);
-    window.addEventListener(OPEN_EVENT, open);
-    return () => window.removeEventListener(OPEN_EVENT, open);
+    if (consumirAberturaPendente()) setIsOpen(true);
+    return aoPedirAbertura(() => setIsOpen(true));
   }, []);
 
   useEffect(() => {
