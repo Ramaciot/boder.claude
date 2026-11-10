@@ -22,19 +22,33 @@ import "./cine.css";
  *  - Quadros por janela: o 1º na hora; depois só uma janela à frente (e um
  *    pouco atrás) de onde a rolagem está, no máximo 4 downloads simultâneos,
  *    decode assíncrono; um "esqueleto" esparso (1 a cada 10) entra quando o
- *    navegador fica ocioso, para cobrir rolagens rápidas. Nunca os 120 de uma vez.
+ *    navegador fica ocioso, para cobrir rolagens rápidas. Nunca todos de uma vez.
  *  - Fora da tela: loop parado e todas as animações CSS da abertura pausadas.
- *  - Canvas com resolução limitada e sem refazer tudo quando a barra de
- *    endereço do celular aparece/some.
+ *  - Canvas com devicePixelRatio limitado a 2 e sem refazer tudo quando a
+ *    barra de endereço do celular aparece/some.
  *
  * Unificação com o site: no trecho final (88%→100%) a cena se dissolve até
  * ficar transparente, revelando o fundo do próprio site.
  */
 
-const TOTAL_FRAMES = 120;
 const MOBILE_QUERY = "(max-width: 760px)";
-const frameUrl = (set: "desktop" | "mobile", n: number) =>
-  `/cine/assets/frames/${set}/f_${String(n).padStart(4, "0")}.webp`;
+
+/**
+ * Configuração dos quadros vem do próprio pacote (frames.json): total,
+ * largura/altura (desktop) e o padrão dos arquivos. Nada fixo no código — ao
+ * trocar o pacote, basta substituir a pasta frames/. As dimensões do mobile
+ * (retrato) são lidas do próprio quadro carregado.
+ */
+const FRAMES_JSON = "/cine/assets/frames/frames.json";
+interface FramesConfig {
+  total: number;
+  largura: number;
+  altura: number;
+  desktop: string;
+  mobile: string;
+}
+const frameUrl = (cfg: FramesConfig, set: "desktop" | "mobile", n: number) =>
+  `/cine/${cfg[set].replace("{n}", String(n).padStart(4, "0"))}`;
 
 /** Logo 3D da Boder (mesma arte de /cine/assets/logo.png), em WebP leve. */
 const METEORO_URL = "/cine/assets/logo-3d-meteoro.webp";
@@ -96,8 +110,12 @@ export const CineOpening = () => {
 
     const reduzir = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const celularMql = window.matchMedia(MOBILE_QUERY);
-    const total = TOTAL_FRAMES;
     let set: "desktop" | "mobile" = celularMql.matches ? "mobile" : "desktop";
+    let cfg: FramesConfig | null = null;
+    let total = 0; // conhecido quando o frames.json chega
+    // Dimensões do quadro do conjunto atual (desktop: frames.json; mobile:
+    // lidas do 1º quadro carregado). 0 = ainda desconhecidas.
+    let fonte = { w: 0, h: 0 };
 
     // ── Quadros: carga por janela ─────────────────────────────────────────
     let quadros: (HTMLImageElement | null)[] = [];
@@ -109,6 +127,7 @@ export const CineOpening = () => {
     let idleId = 0;
     let disposed = false;
 
+    // Progresso da rolagem (0–1): alvo = real; atual = suavizado
     let alvo = 0;
     let atual = 0;
     let desenhado = -1;
@@ -117,6 +136,8 @@ export const CineOpening = () => {
     let saidaAplicada = -1;
     let ultimaJanela = -99;
     let tamanho = { w: 0, h: 0 };
+
+    const indice = (p: number) => Math.round(p * Math.max(0, total - 1));
 
     const maisProximo = (i: number) => {
       for (let d = 0; d < total; d++) {
@@ -148,7 +169,7 @@ export const CineOpening = () => {
         const g = geracao;
         const img = new Image();
         img.decoding = "async";
-        img.src = frameUrl(set, i + 1);
+        img.src = frameUrl(cfg!, set, i + 1);
         quadros[i] = img;
         const fim = (ok: boolean) => {
           if (g !== geracao || disposed) return;
@@ -156,7 +177,13 @@ export const CineOpening = () => {
           if (ok) {
             prontos[i] = true;
             // Só redesenha se este quadro é melhor que o que está na tela
-            const alvoIdx = Math.round(atual);
+            const alvoIdx = indice(atual);
+            // 1º quadro pronto: dimensões reais (o mobile retrato não está no json)
+            if (i === 0 && (img.naturalWidth !== fonte.w || img.naturalHeight !== fonte.h)) {
+              fonte = { w: img.naturalWidth, h: img.naturalHeight };
+              splash?.medir(fonte, set);
+              splash?.atualizar(atual);
+            }
             if (desenhado < 0 || Math.abs(i - alvoIdx) < Math.abs(desenhado - alvoIdx)) desenhar(alvoIdx, true);
           }
           bombear();
@@ -188,7 +215,9 @@ export const CineOpening = () => {
     };
 
     const iniciarQuadros = () => {
+      if (!cfg) return;
       geracao++;
+      fonte = set === "desktop" ? { w: cfg.largura, h: cfg.altura } : { w: 0, h: 0 };
       quadros = new Array(total).fill(null);
       prontos = new Array(total).fill(false);
       pedidos = new Array(total).fill(false);
@@ -197,7 +226,7 @@ export const CineOpening = () => {
       desenhado = -1;
       ultimaJanela = -99;
       bombear();
-      janela(Math.round(atual));
+      janela(indice(atual));
       const agendar = () => {
         if (typeof window.requestIdleCallback === "function") idleId = window.requestIdleCallback(esqueleto, { timeout: 4000 });
         else window.setTimeout(esqueleto, 2500);
@@ -255,16 +284,16 @@ export const CineOpening = () => {
     const quadro = () => {
       raf = 0;
       if (!visivel) return;
-      alvo = progresso() * (total - 1);
+      alvo = progresso();
       atual += (alvo - atual) * 0.18; // suaviza: sensação de filme, não de slide
-      if (Math.abs(alvo - atual) < 0.05) atual = alvo;
-      const p = atual / (total - 1);
+      if (Math.abs(alvo - atual) < 0.0004) atual = alvo;
+      const p = atual;
 
-      desenhar(Math.round(atual));
+      if (total) desenhar(indice(p));
       atualizarMomentos(p);
       splash?.atualizar(p);
 
-      const idx = Math.round(alvo);
+      const idx = indice(alvo);
       if (Math.abs(idx - ultimaJanela) >= 2) {
         ultimaJanela = idx;
         janela(idx);
@@ -281,21 +310,13 @@ export const CineOpening = () => {
       const h = palco.clientHeight;
       if (!forcar && w === tamanho.w && h === tamanho.h) return;
       tamanho = { w, h };
-      // Resolução interna = o detalhe que o quadro realmente tem na tela.
-      // Com "cover", cada pixel do quadro ocupa `s` pixels CSS; desenhar acima
-      // de ~1,15 px por pixel do quadro não acrescenta nada visível, só custo
-      // (no celular, o recorte mostra ~125 px de largura do quadro de 640).
-      // O navegador estica o canvas na GPU.
-      const fonte = set === "mobile" ? { w: 640, h: 270 } : { w: 1440, h: 608 };
-      const s = Math.max(w / fonte.w, h / fonte.h);
-      const teto = Math.min(window.devicePixelRatio || 1, celularMql.matches ? 1.25 : 1.5);
-      const densidade = Math.max(0.5, Math.min(teto, 1.15 / s));
-      canvas.width = Math.round(w * densidade);
-      canvas.height = Math.round(h * densidade);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
       desenhado = -1;
-      desenhar(Math.round(atual), true);
-      splash?.medir();
-      splash?.atualizar(atual / (total - 1));
+      if (total) desenhar(indice(atual), true);
+      splash?.medir(fonte, set);
+      splash?.atualizar(atual);
     };
     const aoRedimensionar = () => ajustar();
 
@@ -326,10 +347,20 @@ export const CineOpening = () => {
       { rootMargin: "0px 0px -100% 0px" },
     );
 
-    atual = alvo = reduzir ? 0 : progresso() * (total - 1);
-    iniciarQuadros();
+    atual = alvo = reduzir ? 0 : progresso();
     ajustar(true);
-    atualizarMomentos(atual / (total - 1));
+    atualizarMomentos(atual);
+    // Lê a configuração do pacote de quadros e só então começa a carregá-los.
+    fetch(FRAMES_JSON)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`frames.json: HTTP ${r.status}`))))
+      .then((json: FramesConfig) => {
+        if (disposed) return;
+        cfg = json;
+        total = Math.max(1, Math.floor(json.total));
+        iniciarQuadros();
+        ajustar(true);
+      })
+      .catch((erro) => console.warn("Abertura: não foi possível ler os quadros.", erro));
     // As fontes (Manrope 800 do wordmark) mudam a largura do texto: remede.
     void document.fonts?.ready.then(() => !disposed && ajustar(true));
     io.observe(section);

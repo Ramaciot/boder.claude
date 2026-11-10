@@ -385,6 +385,11 @@
   50% { opacity: 1; }
 }
 
+/* Até saber as dimensões do quadro, o meteoro não aparece (sem pular de lugar) */
+.cine-meteoro.is-sem-medida {
+  display: none;
+}
+
 /* Pausas: meteoro fora de vista, ou a abertura inteira fora da tela */
 .cine-meteoro.is-fora,
 .cine-meteoro.is-fora *,

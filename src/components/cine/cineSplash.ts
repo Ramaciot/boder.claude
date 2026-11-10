@@ -15,9 +15,17 @@
  * enquanto há scroll a acompanhar.
  */
 
-/** Posição do portal no quadro do filme (fração da imagem 1440×608). */
-const PORTAL = { x: 0.51, y: 0.27, diametro: 0.31, astronautaY: 0.8 };
-const IMAGEM = { w: 1440, h: 608 };
+/**
+ * Onde está o portal no filme, em frações do quadro (x/y do centro,
+ * diâmetro do anel em fração da ALTURA, e a altura do astronauta). Isto
+ * descreve o enquadramento do filme — por isso é por conjunto (o mobile é um
+ * corte retrato) — e é aplicado sobre as dimensões reais do quadro, que vêm
+ * do frames.json / da própria imagem.
+ */
+const PORTAL = {
+  desktop: { x: 0.52, y: 0.31, diametro: 0.38, astronautaY: 0.8 },
+  mobile: { x: 0.565, y: 0.29, diametro: 0.32, astronautaY: 0.8 },
+} as const;
 
 /** Trechos do progresso (0–1) da abertura. */
 const VOO_FIM = 0.11; // wordmark chega ao cabeçalho
@@ -45,8 +53,12 @@ export const criarSplash = (refs: SplashRefs) => {
   let ultimoT = -1;
   let ultimoMeteoro = -1;
 
-  /** Mede tudo: tamanho do wordmark, destino no cabeçalho e posição do portal. */
-  const medir = () => {
+  /**
+   * Mede tudo: tamanho do wordmark, destino no cabeçalho e posição do portal.
+   * `quadro` = dimensões do quadro do conjunto atual (0 = ainda desconhecidas:
+   * o meteoro espera o 1º quadro para se posicionar).
+   */
+  const medir = (quadro: { w: number; h: number }, conjunto: "desktop" | "mobile") => {
     const W = palco.clientWidth;
     const H = palco.clientHeight;
 
@@ -65,21 +77,26 @@ export const criarSplash = (refs: SplashRefs) => {
     };
 
     // 2) Portal no filme (object-fit: cover, igual ao canvas dos quadros).
-    const s = Math.max(W / IMAGEM.w, H / IMAGEM.h);
-    const ox = (W - IMAGEM.w * s) / 2;
-    const oy = (H - IMAGEM.h * s) / 2;
-    const d = PORTAL.diametro * IMAGEM.h * s;
-    const cx = ox + PORTAL.x * IMAGEM.w * s;
-    const cy = oy + PORTAL.y * IMAGEM.h * s;
-    const astronautaY = oy + PORTAL.astronautaY * IMAGEM.h * s;
+    ultimoT = -1;
+    ultimoMeteoro = -1;
+    if (!quadro.w || !quadro.h) {
+      meteoro.classList.add("is-sem-medida");
+      return;
+    }
+    meteoro.classList.remove("is-sem-medida");
+    const portal = PORTAL[conjunto];
+    const s = Math.max(W / quadro.w, H / quadro.h);
+    const ox = (W - quadro.w * s) / 2;
+    const oy = (H - quadro.h * s) / 2;
+    const d = portal.diametro * quadro.h * s;
+    const cx = ox + portal.x * quadro.w * s;
+    const cy = oy + portal.y * quadro.h * s;
+    const astronautaY = oy + portal.astronautaY * quadro.h * s;
     meteoro.style.setProperty("--cx", `${cx.toFixed(1)}px`);
     meteoro.style.setProperty("--cy", `${cy.toFixed(1)}px`);
     meteoro.style.setProperty("--d", `${d.toFixed(1)}px`);
     meteoro.style.setProperty("--feixe", `${Math.max(0, astronautaY - cy).toFixed(1)}px`);
     meteoro.style.transformOrigin = `${cx.toFixed(1)}px ${cy.toFixed(1)}px`;
-
-    ultimoT = -1;
-    ultimoMeteoro = -1;
   };
 
   /** Aplica o estado do splash para o progresso `p` (0–1, suavizado). */
