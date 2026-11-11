@@ -5,9 +5,13 @@ import * as THREE from "three";
  *
  * Vale lunar sob céu de espaço profundo; o meteoro é a logo 3D REAL da Boder
  * (textura), corpo luminoso com brilho emanando dela, partículas atraídas e
- * um feixe que desce até o foco de luz onde está o astronauta (construído em
- * código, primitivas com material próprio). No scroll o astronauta sobe e
- * vira para a tela, e a câmera acompanha.
+ * um feixe que desce até o foco de luz onde está o astronauta.
+ *
+ * O astronauta é o DO FILME aprovado (V4 retrato), recortado com alfa: uma
+ * camada de sprites desenhada por cima da cena, dirigida pelo mesmo progresso.
+ * Os recortes ficam nas coordenadas do próprio filme (810×1440), encaixados
+ * num quadro 9:16 na tela — a posição vem do filme, sem tremer. No repouso a
+ * camada "respira" (oscilação sutil); a câmera GL não aproxima sem scroll.
  *
  * Arte estilizada, não fotorealista: todos os materiais são shaders próprios
  * (luz-chave fria, contorno esmeralda, neblina por profundidade e altura),
@@ -26,6 +30,25 @@ interface Opcoes {
   celular: boolean;
   dpr: number;
   logoUrl: string;
+  /** Manifesto dos recortes do astronauta (JSON). */
+  astroUrl: string;
+}
+
+interface QuadroAstro {
+  /** Quadro do filme (1…). */
+  f: number;
+  arq: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+interface ManifestoAstro {
+  largura: number;
+  altura: number;
+  /** Fração do progresso em que o filme do astronauta termina (segura o último). */
+  fim: number;
+  quadros: QuadroAstro[];
 }
 
 // ── Paleta (espaço de cor do site, sem conversão) ──────────────────────────
@@ -110,6 +133,7 @@ export const criarCena = async (canvas: HTMLCanvasElement, op: Opcoes): Promise<
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // shaders já escrevem na cor final
   renderer.setClearColor(COR.fundo, 1);
   renderer.setPixelRatio(op.dpr);
+  renderer.autoClear = false;
 
   const cena = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(42, 16 / 9, 0.1, 900);
@@ -425,117 +449,6 @@ export const criarCena = async (canvas: HTMLCanvasElement, op: Opcoes): Promise<
   };
   posicionarFeixe(METEORO.clone().add(new THREE.Vector3(0, -3.5, 0)), ASTRO_BASE.clone().add(new THREE.Vector3(0, -0.2, 0)));
 
-  // ── Astronauta (primitivas + material com contorno esmeralda) ───────────
-  const fazTraje = (base: string, emissao = 0) =>
-    guarda(
-      new THREE.ShaderMaterial({
-        uniforms: { ...uComuns, uBase: { value: new THREE.Color(base) }, uEmissao: { value: emissao }, uBrilho: uBrilhoTraje },
-        vertexShader: /* glsl */ `
-          varying vec3 vMundo; varying vec3 vN; varying float vY;
-          void main(){ vec4 m = modelMatrix * vec4(position, 1.0); vMundo = m.xyz; vY = position.y; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * viewMatrix * m; }`,
-        fragmentShader: /* glsl */ `
-          varying vec3 vMundo; varying vec3 vN; varying float vY;
-          uniform vec3 uBase; uniform float uEmissao; uniform float uBrilho; uniform vec3 uChave; uniform vec3 uMeteoro; uniform vec3 uMenta; uniform vec3 uEsmeralda; uniform vec3 uFoco;
-          ${GLSL_NEBLINA}
-          void main(){
-            vec3 n = normalize(vN); vec3 v = normalize(cameraPosition - vMundo);
-            // luz-chave suave (tecido do traje), sombra azulada
-            float k = clamp((dot(n, uChave) + 0.4) / 1.4, 0.0, 1.0);
-            vec3 sombra = uBase * vec3(0.16, 0.2, 0.24);
-            vec3 cor = mix(sombra, uBase * vec3(0.92, 0.96, 1.0), smoothstep(0.05, 0.95, k));
-            // brilho especular leve (tecido revestido)
-            vec3 hv = normalize(uChave + v);
-            cor += vec3(0.35) * pow(max(dot(n, hv), 0.0), 28.0) * 0.5;
-            // contorno esmeralda vindo do meteoro + luz do foco por baixo
-            vec3 lm = normalize(uMeteoro - vMundo);
-            float face = max(dot(n, lm), 0.0);
-            float borda = pow(1.0 - max(dot(n, v), 0.0), 2.4);
-            cor += uMenta * (borda * (0.22 + 0.85 * face) + face * 0.08) * (0.8 + uBrilho);
-            float df = length(vMundo.xz - uFoco.xz);
-            cor += uMenta * 0.10 * max(-n.y * 0.5 + 0.5, 0.0) * exp(-df * df * 0.2);
-            cor += uMenta * uEmissao;
-            gl_FragColor = vec4(aplicaNeblina(cor, vMundo, cameraPosition), 1.0);
-          }`,
-      }),
-    );
-  const uBrilhoTraje = { value: 0 };
-  const matTraje = fazTraje("#dfe6e3");
-  const matJunta = fazTraje("#7d8885");
-  const matEscuro = fazTraje("#3a4442");
-  const matLuz = fazTraje("#0f1a17", 0.85);
-  const matViseira = guarda(
-    new THREE.ShaderMaterial({
-      uniforms: { ...uComuns },
-      vertexShader: /* glsl */ `
-        varying vec3 vMundo; varying vec3 vN;
-        void main(){ vec4 m = modelMatrix * vec4(position, 1.0); vMundo = m.xyz; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * viewMatrix * m; }`,
-      fragmentShader: /* glsl */ `
-        varying vec3 vMundo; varying vec3 vN; uniform vec3 uChave; uniform vec3 uMeteoro; uniform vec3 uMenta; uniform vec3 uEsmeralda;
-        ${GLSL_NEBLINA}
-        void main(){
-          vec3 n = normalize(vN); vec3 v = normalize(cameraPosition - vMundo);
-          float fr = pow(1.0 - max(dot(n, v), 0.0), 2.2);
-          vec3 r = reflect(-v, n);
-          float esp = pow(max(dot(r, uChave), 0.0), 80.0);
-          float met = pow(max(dot(r, normalize(uMeteoro - vMundo)), 0.0), 24.0);
-          // vidro escuro esmeralda: horizonte refletido + brilho do meteoro
-          vec3 cor = vec3(0.01, 0.028, 0.024) + uEsmeralda * (0.06 + 0.5 * fr);
-          cor += uEsmeralda * 0.28 * smoothstep(0.22, 0.0, abs(r.y + 0.04));
-          cor += uMenta * met * 0.9 + vec3(0.95) * esp * 0.8;
-          gl_FragColor = vec4(aplicaNeblina(cor, vMundo, cameraPosition), 1.0);
-        }`,
-    }),
-  );
-
-  const astro = new THREE.Group(); // posição/rotação controladas pelo scroll
-  const corpo = new THREE.Group(); // "respiração" e balanço, no lugar
-  astro.add(corpo);
-  cena.add(astro);
-  const parte = (g: THREE.BufferGeometry, m: THREE.Material, x: number, y: number, z: number, rx = 0, ry = 0, rz = 0, pai: THREE.Object3D = corpo) => {
-    const mesh = new THREE.Mesh(guarda(g), m);
-    mesh.position.set(x, y, z);
-    mesh.rotation.set(rx, ry, rz);
-    pai.add(mesh);
-    return mesh;
-  };
-  const seg = celular ? 14 : 24;
-  // Proporção estilizada (capacete um pouco grande), altura ~1,85. Frente = +z.
-  parte(new THREE.CapsuleGeometry(0.31, 0.34, 8, seg), matTraje, 0, 1.06, 0); // tronco
-  parte(new THREE.CylinderGeometry(0.3, 0.27, 0.16, seg), matJunta, 0, 0.78, 0); // cinto
-  parte(new THREE.BoxGeometry(0.17, 0.09, 0.06), matJunta, 0.06, 1.02, 0.29, -0.1); // módulo do peito
-  parte(new THREE.SphereGeometry(0.014, 8, 8), matLuz, 0.03, 1.025, 0.322);
-  parte(new THREE.SphereGeometry(0.014, 8, 8), matLuz, 0.09, 1.025, 0.322);
-  const mochila = parte(new THREE.CapsuleGeometry(0.21, 0.3, 6, seg), matJunta, 0, 1.12, -0.29); // mochila
-  mochila.scale.set(1.15, 1, 0.62);
-  parte(new THREE.BoxGeometry(0.035, 0.32, 0.02), matLuz, -0.1, 1.14, -0.43); // faixas de luz na mochila
-  parte(new THREE.BoxGeometry(0.035, 0.32, 0.02), matLuz, 0.1, 1.14, -0.43);
-  parte(new THREE.TorusGeometry(0.235, 0.05, 10, seg + 8), matJunta, 0, 1.49, 0, Math.PI / 2); // anel do capacete
-  parte(new THREE.SphereGeometry(0.36, seg + 8, seg), matTraje, 0, 1.76, 0); // capacete
-  parte(new THREE.SphereGeometry(0.335, seg + 8, seg, Math.PI * 0.14, Math.PI * 0.72, Math.PI * 0.24, Math.PI * 0.46), matViseira, 0, 1.775, 0.05); // viseira
-  const braco = (lado: number) => {
-    const ombro = new THREE.Group();
-    ombro.position.set(lado * 0.37, 1.3, 0);
-    ombro.rotation.z = lado * 0.28;
-    corpo.add(ombro);
-    parte(new THREE.SphereGeometry(0.15, seg, seg), matTraje, 0, 0, 0, 0, 0, 0, ombro);
-    parte(new THREE.CapsuleGeometry(0.125, 0.2, 6, seg), matTraje, 0, -0.2, 0, 0, 0, 0, ombro);
-    parte(new THREE.SphereGeometry(0.11, seg, seg), matJunta, 0, -0.37, 0.01, 0, 0, 0, ombro); // cotovelo
-    parte(new THREE.CapsuleGeometry(0.115, 0.16, 6, seg), matTraje, 0, -0.52, 0.05, -0.25, 0, 0, ombro);
-    parte(new THREE.SphereGeometry(0.115, seg, seg), matEscuro, 0, -0.69, 0.1, 0, 0, 0, ombro); // luva
-    return ombro;
-  };
-  const bracoD = braco(1);
-  const bracoE = braco(-1);
-  const perna = (lado: number) => {
-    parte(new THREE.CapsuleGeometry(0.145, 0.2, 6, seg), matTraje, lado * 0.155, 0.58, 0, 0, 0, lado * 0.03);
-    parte(new THREE.SphereGeometry(0.13, seg, seg), matJunta, lado * 0.16, 0.4, 0.015); // joelho
-    parte(new THREE.CapsuleGeometry(0.13, 0.16, 6, seg), matTraje, lado * 0.165, 0.25, 0);
-    const bota = parte(new THREE.CapsuleGeometry(0.105, 0.14, 6, seg), matEscuro, lado * 0.16, 0.07, 0.06, Math.PI / 2);
-    bota.scale.set(1, 1, 0.75);
-  };
-  perna(1);
-  perna(-1);
-
   // Poeira viva (volume em volta do caminho da câmera)
   const poeira = (() => {
     const qtd = celular ? 260 : 820;
@@ -579,6 +492,126 @@ export const criarCena = async (canvas: HTMLCanvasElement, op: Opcoes): Promise<
   })();
   void poeira;
 
+  // ── Astronauta do filme: camada de sprites (recortes com alfa) ─────────
+  const man = (await (await fetch(op.astroUrl)).json()) as ManifestoAstro;
+  const pastaAstro = op.astroUrl.replace(/[^/]+$/, "");
+  const texPorArq = new Map<string, Promise<THREE.Texture>>();
+  const texDe: (THREE.Texture | null)[] = man.quadros.map(() => null);
+  const carregador = new THREE.TextureLoader();
+  const carregarArq = (arq: string) => {
+    if (!texPorArq.has(arq))
+      texPorArq.set(
+        arq,
+        carregador.loadAsync(pastaAstro + arq).then((t) => {
+          t.colorSpace = THREE.NoColorSpace;
+          t.minFilter = THREE.LinearMipmapLinearFilter;
+          guarda(t);
+          renderer.initTexture(t); // sobe para a GPU agora, nunca durante o scroll
+          return t;
+        }),
+      );
+    return texPorArq.get(arq)!;
+  };
+  const carregarQuadro = (i: number) =>
+    carregarArq(man.quadros[i].arq).then((t) => {
+      texDe[i] = t;
+    });
+  // pose de repouso primeiro; o resto em seguida, em ordem, sem pressa
+  await carregarQuadro(0);
+  void (async () => {
+    for (let i = 1; i < man.quadros.length; i++) {
+      try {
+        await carregarQuadro(i);
+      } catch {
+        /* quadro faltando: usa o vizinho mais próximo */
+      }
+    }
+  })();
+  const maisProximo = (i: number) => {
+    for (let d = 0; d < man.quadros.length; d++) {
+      if (i - d >= 0 && texDe[i - d]) return i - d;
+      if (i + d < man.quadros.length && texDe[i + d]) return i + d;
+    }
+    return -1;
+  };
+
+  const cenaHud = new THREE.Scene();
+  const camHud = new THREE.OrthographicCamera(0, 1, 0, -1, -1, 1);
+  const fazSprite = () => {
+    const m = guarda(
+      new THREE.ShaderMaterial({
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+        blending: THREE.CustomBlending,
+        blendSrc: THREE.OneFactor,
+        blendDst: THREE.OneMinusSrcAlphaFactor,
+        uniforms: {
+          uMapa: { value: null as THREE.Texture | null },
+          uAlfa: { value: 1 },
+          uMenta: uComuns.uMenta,
+          uRet: { value: new THREE.Vector4(0, 0, 1, 1) }, // recorte no quadro do filme (0–1, y para baixo)
+        },
+        vertexShader: /* glsl */ `
+          varying vec2 vUv; varying vec2 vQf; uniform vec4 uRet;
+          void main(){
+            vUv = uv;
+            vQf = vec2(uRet.x + uv.x * uRet.z, uRet.y + (1.0 - uv.y) * uRet.w);
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }`,
+        fragmentShader: /* glsl */ `
+          varying vec2 vUv; varying vec2 vQf; uniform sampler2D uMapa; uniform float uAlfa; uniform vec3 uMenta;
+          void main(){
+            vec4 c = texture2D(uMapa, vUv);
+            // leve banho esmeralda nas sombras, para casar com a luz da cena
+            vec3 cor = c.rgb + uMenta * 0.05 * (1.0 - c.rgb);
+            // bordas do quadro 9:16 do filme se dissolvem na cena (close-up sem "cartão")
+            float borda = smoothstep(0.0, 0.2, vQf.x) * smoothstep(1.0, 0.8, vQf.x) * smoothstep(0.86, 0.68, vQf.y);
+            borda *= 1.0 - smoothstep(0.4, 0.6, length((vQf - vec2(0.5, 0.5)) * vec2(1.0, 0.62)));
+            float a = c.a * uAlfa * borda;
+            gl_FragColor = vec4(cor * a, a);
+          }`,
+      }),
+    );
+    const q = new THREE.Mesh(guarda(new THREE.PlaneGeometry(1, 1)), m);
+    q.frustumCulled = false;
+    cenaHud.add(q);
+    return { q, m };
+  };
+  const spriteA = fazSprite();
+  // quadro 9:16 do filme encaixado na tela (px, y para baixo)
+  let vf = { k: 1, ox: 0, oy: 0 };
+  const posSprite = (s: { q: THREE.Mesh; m: THREE.ShaderMaterial }, qd: QuadroAstro, esc: number, dy: number, pivo: { x: number; y: number }) => {
+    const X = vf.ox + qd.x * vf.k;
+    const Y = vf.oy + qd.y * vf.k;
+    const Wd = qd.w * vf.k;
+    const Hd = qd.h * vf.k;
+    // escala em volta do pé (pivô), para "respirar" no lugar
+    const cx = pivo.x + (X + Wd / 2 - pivo.x) * esc;
+    const cy = pivo.y + (Y + Hd / 2 - pivo.y) * esc + dy;
+    s.q.position.set(cx, -cy, 0);
+    s.q.scale.set(Wd * esc, Hd * esc, 1);
+    s.m.uniforms.uRet.value.set(qd.x / man.largura, qd.y / man.altura, qd.w / man.largura, qd.h / man.altura);
+  };
+
+  // Foco de luz/feixe: no chão, sob os pés do astronauta no repouso
+  const FOCO = ASTRO_BASE.clone();
+  const raio = new THREE.Raycaster();
+  const chao = new THREE.Plane(new THREE.Vector3(0, 1, 0), -ASTRO_BASE.y);
+  const CAM_REPOUSO = { pos: new THREE.Vector3(0, 2.1, 15), alvo: new THREE.Vector3(0, 6.2, -60) };
+  const medirFoco = (w: number, h: number) => {
+    const q0 = man.quadros[0];
+    const px = vf.ox + (q0.x + q0.w / 2) * vf.k;
+    const py = vf.oy + (q0.y + q0.h * 0.97) * vf.k;
+    camera.position.copy(CAM_REPOUSO.pos);
+    camera.lookAt(CAM_REPOUSO.alvo);
+    camera.updateMatrixWorld();
+    raio.setFromCamera(new THREE.Vector2((px / w) * 2 - 1, -(py / h) * 2 + 1), camera);
+    const p = new THREE.Vector3();
+    if (raio.ray.intersectPlane(chao, p) && p.z < 14 && p.z > -120) FOCO.copy(p);
+    uComuns.uFoco.value.copy(FOCO);
+  };
+
   // ── Coreografia ──────────────────────────────────────────────────────────
   const camPos = new THREE.Vector3();
   const camAlvo = new THREE.Vector3();
@@ -592,31 +625,11 @@ export const criarCena = async (canvas: HTMLCanvasElement, op: Opcoes): Promise<
   const render = (p: number, t: number) => {
     uComuns.uTempo.value = t;
 
-    // Astronauta: no repouso, de costas olhando o meteoro, "respirando" no
-    // lugar. No scroll: sobe (puxado pelo feixe) e vira para a tela.
-    const sobe = eio(0.05, 0.8, p);
-    const vira = eio(0.16, 0.72, p);
-    astro.position.set(ASTRO_BASE.x, ASTRO_BASE.y + sobe * 6.2, ASTRO_BASE.z + eio(0.25, 1, p) * 2.2);
-    astro.rotation.set(-0.08 * sobe, Math.PI + vira * Math.PI, 0.05 * Math.sin(vira * Math.PI));
-    const resp = Math.sin(t * 1.7);
-    corpo.position.y = resp * 0.02 + sobe * Math.sin(t * 0.85) * 0.1;
-    corpo.rotation.z = Math.sin(t * 0.55) * 0.02 * (1 + sobe * 2);
-    corpo.scale.set(1 + resp * 0.006, 1 - resp * 0.004, 1 + resp * 0.006);
-    // braços abrem um pouco ao flutuar
-    bracoD.rotation.z = 0.28 + sobe * 0.5 + Math.sin(t * 0.9) * 0.04 * sobe;
-    bracoE.rotation.z = -0.28 - sobe * 0.5 - Math.sin(t * 0.9 + 1) * 0.04 * sobe;
-    uBrilhoTraje.value = 0.12 + 0.08 * Math.sin(t * 1.2);
-    uComuns.uFoco.value.set(astro.position.x, ASTRO_BASE.y, astro.position.z);
-
-    // Câmera: parada no repouso; com o scroll avança, sobe e enquadra o
-    // astronauta em plano médio, com o meteoro atrás e acima.
-    const aprox = eio(0.03, 1, p);
-    camPos.set(
-      mistura(0, 0.35, aprox),
-      mistura(2.1, astro.position.y + 0.55, aprox),
-      mistura(15, astro.position.z + 6.2, aprox),
-    );
-    camAlvo.set(0, mistura(6.2, astro.position.y + 2.4, eio(0.05, 0.95, p)), mistura(-60, astro.position.z - 6, eio(0.05, 0.95, p)));
+    // Câmera GL: parada no repouso; no scroll sobe e inclina para o céu
+    // (o astronauta do filme faz a aproximação dele)
+    const a = eio(0.04, 1, p);
+    camPos.set(0, mistura(CAM_REPOUSO.pos.y, 4.6, a), mistura(CAM_REPOUSO.pos.z, 8.5, a));
+    camAlvo.set(0, mistura(CAM_REPOUSO.alvo.y, 12.5, a), CAM_REPOUSO.alvo.z);
     camera.position.copy(camPos);
     camera.lookAt(camAlvo);
 
@@ -631,11 +644,28 @@ export const criarCena = async (canvas: HTMLCanvasElement, op: Opcoes): Promise<
     // de frente para a câmera e, depois, o balanço no próprio plano
     logo.lookAt(tmp.copy(camera.position));
     logo.rotateZ(Math.sin(t * 0.42) * BALANCO * 0.6 + Math.sin(t * 0.23 + 1.3) * BALANCO * 0.4);
-    // o feixe segue o astronauta; enfraquece quando ele sobe
-    posicionarFeixe(tmp.copy(METEORO).add(new THREE.Vector3(0, -4.2, 0)), new THREE.Vector3(astro.position.x, ASTRO_BASE.y - 0.2, astro.position.z));
-    feixeMat.uniforms.uForca.value = 1 - 0.5 * sobe;
+    // feixe até o foco sob os pés; enfraquece quando ele sobe
+    posicionarFeixe(tmp.copy(METEORO).add(new THREE.Vector3(0, -4.2, 0)), FOCO);
+    feixeMat.uniforms.uForca.value = 1 - 0.5 * eio(0.15, 0.6, p);
 
+    // Astronauta: quadro do filme pelo progresso (o mais próximo; misturar
+    // dois quadros de tamanhos diferentes deixa contorno fantasma)
+    const a0 = maisProximo(Math.round(Math.min(1, p / man.fim) * (man.quadros.length - 1)));
+    const resp = Math.sin(t * 1.7);
+    const repouso = 1 - eio(0.0, 0.2, p);
+    const esc = 1 + resp * 0.007 * (0.4 + 0.6 * repouso);
+    const dy = -resp * 1.2 * (0.4 + 0.6 * repouso);
+    const q0 = man.quadros[0];
+    const pivo = { x: vf.ox + (q0.x + q0.w / 2) * vf.k, y: vf.oy + (q0.y + q0.h) * vf.k };
+    spriteA.q.visible = a0 >= 0;
+    if (a0 >= 0) {
+      spriteA.m.uniforms.uMapa.value = texDe[a0];
+      posSprite(spriteA, man.quadros[a0], esc, dy, pivo);
+    }
+
+    renderer.clear();
     renderer.render(cena, camera);
+    renderer.render(cenaHud, camHud);
   };
 
   const redimensionar = (w: number, h: number, dpr: number) => {
@@ -645,6 +675,15 @@ export const criarCena = async (canvas: HTMLCanvasElement, op: Opcoes): Promise<
     // retrato: abre o campo de visão para o vale caber
     camera.fov = w / h < 0.8 ? 58 : w / h < 1.2 ? 50 : 42;
     camera.updateProjectionMatrix();
+    // quadro 9:16 do filme: altura da tela (ou largura, se a tela for mais estreita)
+    const k = Math.min(h / man.altura, w / man.largura);
+    vf = { k, ox: (w - man.largura * k) / 2, oy: (h - man.altura * k) / 2 };
+    camHud.left = 0;
+    camHud.right = w;
+    camHud.top = 0;
+    camHud.bottom = -h;
+    camHud.updateProjectionMatrix();
+    medirFoco(w, h);
   };
 
   return {

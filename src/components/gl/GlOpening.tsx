@@ -27,6 +27,7 @@ import type { Cena } from "./glScene";
  */
 
 const LOGO_3D = "/cine-gl/logo3d-gl.webp";
+const ASTRO = "/cine-gl/astro/astro.json";
 const POSTER = "/cine-gl/poster-gl.webp";
 const MOBILE_QUERY = "(max-width: 760px)";
 const MOMENTS = [
@@ -211,7 +212,7 @@ export const GlOpening = () => {
     else {
       import("./glScene")
         .then(({ criarCena }) =>
-          criarCena(canvas, { celular, dpr: Math.min(window.devicePixelRatio || 1, dprMax), logoUrl: LOGO_3D }),
+          criarCena(canvas, { celular, dpr: Math.min(window.devicePixelRatio || 1, dprMax), logoUrl: LOGO_3D, astroUrl: ASTRO }),
         )
         .then((c) => {
           if (disposed) return c.destruir();
