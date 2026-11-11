@@ -10,7 +10,9 @@ import { Footer } from "@/components/Footer";
 import { ChatBotLazy } from "@/components/ChatBotLazy";
 import { BrandBackground } from "@/components/BrandBackground";
 import { useScrollReveal } from "@/lib/useScrollReveal";
-import { CineOpening } from "@/components/cine/CineOpening";
+// Abertura em tempo real (WebGL). A abertura de quadros (CineOpening) não é
+// importada aqui: nenhum quadro do filme antigo é baixado.
+import { GlOpening } from "@/components/gl/GlOpening";
 
 interface HomeProps {
   /** Id de seção para rolar ao montar (ex.: rota /servicos). */
@@ -45,7 +47,7 @@ const Home = ({ scrollTo }: HomeProps) => {
           <Header />
         </div>
         <main>
-          <CineOpening />
+          <GlOpening />
           <Hero />
           <Services />
           <PortfolioSection />

@@ -50,6 +50,9 @@ export const criarSplash = (refs: SplashRefs) => {
       dx: destino.left - grande.left,
       dy: destino.top - grande.top,
     };
+    // Altura ocupada pelo wordmark a partir da base do palco: a dica de
+    // rolagem fica logo acima dele, sem ficar escondida atrás do texto.
+    palco.style.setProperty("--wordmark-topo", `${Math.round(palco.getBoundingClientRect().bottom - grande.top)}px`);
 
     ultimoT = -1;
   };

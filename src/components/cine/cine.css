@@ -373,12 +373,14 @@
 }
 
 /* ── Dica "role" ──────────────────────────────────────────────────────── */
+/* Dica de rolagem: logo acima do wordmark gigante (o JS mede a altura dele
+   em --wordmark-topo) e no canto direito, longe do wordmark e do astronauta
+   no centro; z-index acima do wordmark. */
 .cine-dica {
   position: absolute;
-  z-index: 6;
-  bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%);
+  z-index: 12;
+  bottom: calc(var(--wordmark-topo, 24vh) + 14px);
+  right: var(--gutter);
   display: grid;
   justify-items: center;
   gap: 8px;

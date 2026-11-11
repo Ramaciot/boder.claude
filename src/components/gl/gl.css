@@ -1,0 +1,30 @@
+/* Abertura WebGL — complementa cine.css (mesmos tokens, wordmark, header,
+   painéis, dica, grão e vinheta). */
+
+.gl-cena {
+  position: absolute;
+  inset: 0;
+  background: #050807;
+  /* dissolve no fundo do próprio site no fim da abertura */
+  opacity: calc(1 - var(--saida, 0));
+}
+.gl-canvas,
+.gl-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.gl-poster {
+  object-fit: cover;
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* Cena pronta: o pôster some por baixo do canvas */
+.gl-abertura.gl-pronto .gl-poster {
+  opacity: 0;
+}
+/* Sem WebGL: só o pôster estático da cena */
+.gl-abertura.gl-sem-webgl .gl-canvas {
+  display: none;
+}
