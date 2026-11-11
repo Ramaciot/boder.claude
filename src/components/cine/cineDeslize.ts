@@ -23,8 +23,8 @@
  * continua perseguindo a posição da página com a mesma suavização.
  */
 
-/** Fração da altura da tela por segundo (travessia de 360vh em ~29 s). */
-const VELOCIDADE = 0.125;
+/** Fração da altura da tela por segundo (travessia de 360vh em ~36 s: cerimônia, não correria). */
+const VELOCIDADE = 0.1;
 /** Abaixo disto (px) o movimento externo é ruído de arredondamento. */
 const RUIDO_PX = 1.5;
 /** Depois do último wheel/tecla, o deslize espera isto antes de voltar a escrever. */

@@ -11,9 +11,11 @@ import type { Cena } from "./glScene";
  * Abertura em tempo real (WebGL), sem sequência de quadros.
  *
  * Seção alta (460vh) com palco fixo; a cena (glScene.ts, three.js em chunk
- * separado) é renderizada ao vivo. Por cima, a mesma camada aprovada: wordmark
- * BODER SPACE que voa para o cabeçalho ao lado da logo flat (cineSplash),
- * título, painéis, dica de rolagem e o deslize automático (cineDeslize).
+ * separado) é renderizada ao vivo. Por cima, só o essencial (padrão de
+ * direção de arte "imagem heróica única"): wordmark BODER SPACE que voa para
+ * o cabeçalho ao lado da logo flat (cineSplash), UMA frase curta, dica de
+ * rolagem e o CTA de agendamento em pílula, visível desde o primeiro quadro.
+ * Deslize automático lento (cineDeslize).
  *
  * Desempenho:
  *  - three.js só é baixado aqui (import dinâmico); DPR máx. 2 no desktop e
@@ -30,10 +32,8 @@ const LOGO_3D = "/cine-gl/logo3d-gl.webp";
 const ASTRO = "/cine-gl/astro/astro.json";
 const POSTER = "/cine-gl/poster-gl.webp";
 const MOBILE_QUERY = "(max-width: 760px)";
-const MOMENTS = [
-  { from: 0.3, to: 0.58 },
-  { from: 0.64, to: 0.88 },
-] as const;
+/** A frase entra depois que o nome voa para o cabeçalho e sai antes do close. */
+const FRASE = { entra: [0.1, 0.17], sai: [0.6, 0.68] } as const;
 const SAIDA_INICIO = 0.88;
 /** Suavização da câmera: 0,18 por quadro a 60 fps (normalizada pelo tempo). */
 const SUAVIZA = 0.18;
@@ -56,8 +56,7 @@ export const GlOpening = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const palcoRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const titleRef = useRef<HTMLDivElement>(null);
-  const momentRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const fraseRef = useRef<HTMLDivElement>(null);
   const wordmarkRef = useRef<HTMLDivElement>(null);
   const slotRef = useRef<HTMLSpanElement>(null);
   const logoFlatRef = useRef<HTMLImageElement>(null);
@@ -103,21 +102,25 @@ export const GlOpening = () => {
 
     const progresso = () => Math.min(1, Math.max(0, (window.scrollY - geo.topo) / geo.curso));
 
+    let fraseAplicada = "";
     const atualizarCamada = (p: number) => {
-      MOMENTS.forEach((m, i) => {
-        momentRefs.current[i]?.classList.toggle("ativo", p >= m.from && p < m.to);
-      });
       section.classList.toggle("andou", p > 0.02);
-      const titulo = titleRef.current;
-      if (titulo) {
+      const frase = fraseRef.current;
+      if (frase) {
         const faixa = (a: number, b: number) => {
           const t = Math.min(1, Math.max(0, (p - a) / (b - a)));
           return t * t * (3 - 2 * t);
         };
-        const entra = faixa(0.085, 0.145);
-        const sai = faixa(0.21, 0.28);
-        titulo.style.transform = `translate3d(0, ${((1 - entra) * 6 - sai * 34).toFixed(2)}vh, 0)`;
-        titulo.style.opacity = String(entra * (1 - sai * sai));
+        const entra = faixa(FRASE.entra[0], FRASE.entra[1]);
+        const sai = faixa(FRASE.sai[0], FRASE.sai[1]);
+        // entra subindo devagar e sai se desfazendo para cima (cerimônia, sem pressa)
+        const estado = `${((1 - entra) * 4 - sai * 5).toFixed(2)}|${(entra * (1 - sai)).toFixed(3)}`;
+        if (estado !== fraseAplicada) {
+          fraseAplicada = estado;
+          const [y, o] = estado.split("|");
+          frase.style.transform = `translate3d(0, ${y}vh, 0)`;
+          frase.style.opacity = o;
+        }
       }
       const t = Math.min(1, Math.max(0, (p - SAIDA_INICIO) / (1 - SAIDA_INICIO)));
       const saida = Math.round(t * t * (3 - 2 * t) * 1000) / 1000;
@@ -278,8 +281,9 @@ export const GlOpening = () => {
             <a href="#depoimentos" onClick={goTo("depoimentos")}>
               Depoimentos
             </a>
+            {/* CTA de agendamento: visível desde o herói e sempre ao alcance */}
             <button type="button" className="cine-menu-cta" onClick={openMeetingForm}>
-              Fale conosco
+              Agendar conversa
             </button>
           </nav>
         </header>
@@ -288,45 +292,9 @@ export const GlOpening = () => {
           BODER SPACE
         </div>
 
-        <div ref={titleRef} className="cine-titulo-sair">
-          <h1>
-            Nós somos a<br />
-            Boder Space.
-          </h1>
-          <p className="cine-apoio">
-            Uma agência digital.
-            <br />
-            <em>
-              Criando sites que colocam
-              <br />a sua empresa em órbita.
-            </em>
-          </p>
-        </div>
-
-        <div
-          ref={(el) => {
-            momentRefs.current[0] = el;
-          }}
-          className="cine-momento cine-momento--direita"
-        >
-          <div className="cine-painel cine-painel--vidro">
-            <p className="cine-destaque">
-              Site novo em até 7 dias, com direção de arte em cada tela. Nada de modelo pronto.
-            </p>
-          </div>
-        </div>
-        <div
-          ref={(el) => {
-            momentRefs.current[1] = el;
-          }}
-          className="cine-momento cine-momento--centro"
-        >
-          <div className="cine-painel cine-painel--vidro">
-            <p className="cine-destaque">Mais de 25 empresas já estão no ar com a gente. A próxima pode ser a sua.</p>
-            <button type="button" className="cine-botao" onClick={openMeetingForm}>
-              Quero meu site
-            </button>
-          </div>
+        {/* UMA frase curta de impacto (nada de parágrafos na abertura) */}
+        <div ref={fraseRef} className="cine-frase">
+          <h1>Sites que colocam a sua empresa em órbita.</h1>
         </div>
 
         <div className="cine-dica" aria-hidden="true">

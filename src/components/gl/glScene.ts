@@ -617,6 +617,7 @@ export const criarCena = async (canvas: HTMLCanvasElement, op: Opcoes): Promise<
   const camAlvo = new THREE.Vector3();
   const tmp = new THREE.Vector3();
   const BALANCO = THREE.MathUtils.degToRad(28); // ±28°, nunca gira inteiro nem espelha
+  const ZOOM = 0.08; // aproximação total do zoom cerimonial ao fim da rolagem
   const eio = (a: number, b: number, p: number) => {
     const t = Math.min(1, Math.max(0, (p - a) / (b - a)));
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -632,6 +633,13 @@ export const criarCena = async (canvas: HTMLCanvasElement, op: Opcoes): Promise<
     camAlvo.set(0, mistura(CAM_REPOUSO.alvo.y, 12.5, a), CAM_REPOUSO.alvo.z);
     camera.position.copy(camPos);
     camera.lookAt(camAlvo);
+    // Zoom cerimonial: lento e contínuo ao longo de toda a rolagem, igual na
+    // cena GL e na camada do astronauta (1 no repouso: pés no foco de luz)
+    const zoom = 1 + ZOOM * eio(0, 1, p);
+    camera.fov = fovBase / zoom;
+    camera.updateProjectionMatrix();
+    camHud.zoom = zoom;
+    camHud.updateProjectionMatrix();
 
     // Meteoro: pulso de luz e balanço ±28°
     logo.position.y = Math.sin(t * 0.8) * 0.35;
@@ -668,12 +676,14 @@ export const criarCena = async (canvas: HTMLCanvasElement, op: Opcoes): Promise<
     renderer.render(cenaHud, camHud);
   };
 
+  let fovBase = 42;
   const redimensionar = (w: number, h: number, dpr: number) => {
     renderer.setPixelRatio(dpr);
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     // retrato: abre o campo de visão para o vale caber
-    camera.fov = w / h < 0.8 ? 58 : w / h < 1.2 ? 50 : 42;
+    fovBase = w / h < 0.8 ? 58 : w / h < 1.2 ? 50 : 42;
+    camera.fov = fovBase;
     camera.updateProjectionMatrix();
     // quadro 9:16 do filme: altura da tela (ou largura, se a tela for mais estreita)
     const k = Math.min(h / man.altura, w / man.largura);
